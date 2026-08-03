@@ -1,0 +1,5 @@
+# 使用 ** 匹配任意深度
+**/target/
+**/node_modules/
+.idea/
+*.iml
