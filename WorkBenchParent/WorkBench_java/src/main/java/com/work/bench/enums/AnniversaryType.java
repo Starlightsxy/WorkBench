@@ -9,7 +9,7 @@ import lombok.Getter;
  * @date 2026/8/3 17:14
  */
 @Getter
-public enum anniversary {
+public enum AnniversaryType {
 
     // 纪念日类型
     ANNIVERSARY(1, "纪念日"),
@@ -23,7 +23,7 @@ public enum anniversary {
     private final Integer code;
     private final String desc;
 
-    anniversary(Integer code, String desc) {
+    AnniversaryType(Integer code, String desc) {
         this.code = code;
         this.desc = desc;
     }

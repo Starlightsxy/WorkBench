@@ -10,7 +10,7 @@ import lombok.Getter;
  * @date 2026/8/3 17:06
  */
 @Getter
-public enum Gender {
+public enum GenderType {
 
 
     UNKNOWN(0, "未知"),
@@ -21,7 +21,7 @@ public enum Gender {
     private final String desc;
 
     // 构造方法私有（Lombok 不会生成构造方法，需要手动写）
-    Gender(Integer code, String desc) {
+    GenderType(Integer code, String desc) {
         this.code = code;
         this.desc = desc;
     }
