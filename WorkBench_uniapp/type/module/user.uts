@@ -1,0 +1,7 @@
+// 登录请求DTO
+export type LoginDTO = {
+	account : string;// userName  email  phone
+	password : string;
+	remember ?: boolean;// 记住我
+
+}

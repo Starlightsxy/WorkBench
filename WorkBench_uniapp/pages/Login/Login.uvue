@@ -1,0 +1,117 @@
+<script setup lang="uts">
+	import { LoginDTO } from '../../type/module/user';
+
+	const loginForm = reactive<LoginDTO>({
+		account: '',
+		password: '',
+		remember: false
+	})
+
+	const handleLogin = (e : UniFormSubmitEvent) => {
+		// uni.switchTab({
+		// 	url: "/pages/User/User"
+		// })
+		const formData = e.detail.value
+		// console.log(formData)
+		loginForm.account = formData['account'] as string
+		loginForm.password = formData['password'] as string
+		// console.log(loginForm)
+		// loginForm.remember = formData['remember']
+		console.log(formData)
+	}
+</script>
+
+<template>
+	<view class=" border ">
+		<view class="">
+			<!-- 标题 -->
+			<text class="txt-center fts-20">
+				生活工作台
+			</text>
+			<!-- logo -->
+			<view class="logo">
+				<image src="/static/logo.png" style="width: 100px;  height:100px ;" mode=""></image>
+			</view>
+			<!-- ===== 欢迎文案 ===== -->
+			<view class="">
+				<view>
+					<text class="txt-center mt-20 fts-18">👋 欢迎回来</text>
+					<text class="txt-center" style="color: darkgray; ">登录以管理你的生活点滴</text>
+				</view>
+				<view style="margin-top: 40px;width: 100%;display: flex;align-items: center;">
+					<form @submit="handleLogin" style="width: 300px; ">
+						<view class="form-item-account">
+							<view>
+								<text class="fts-14 mb-5 ">姓名/邮箱/手机号</text>
+							</view>
+							<view>
+								<input class="uni-user fts-12" name="account" :value="loginForm.account"
+									placeholder="请输入姓名" />
+							</view>
+						</view>
+						<view class="form-item-password">
+							<view>
+								<text class="fts-14 mb-5 ">密码</text>
+							</view>
+							<view>
+								<input class="uni-pass fts-12 " password="true" :value="loginForm.password"
+									name="password" placeholder="请输入密码" />
+							</view>
+						</view>
+						<view class="flex-space-between mt-10">
+							<checkbox-group name="remember">
+								<checkbox  :value="loginForm.remember" :checked="loginForm.remember">记住我</checkbox>
+							</checkbox-group>
+							<text class="fts-14" style="color: #4f7cff;">忘记密码?</text>
+						</view>
+						<view class="mt-20">
+							<button form-type="submit" type="primary">登录</button>
+						</view>
+					</form>
+				</view>
+			</view>
+
+		</view>
+	</view>
+</template>
+
+
+<style>
+	.uni-pass,
+	.uni-user {
+		height: 40px;
+		background-color: #f2f5fa;
+		border-radius: 10px;
+		margin-bottom: 10px;
+		padding-left: 10px;
+
+	}
+
+	.login-page {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+	}
+
+	.welcome-box {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+
+	.welcome-text-box {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		margin-top: 20px;
+	}
+
+	.logo {
+		display: flex;
+		justify-content: center;
+		flex-direction: row;
+		margin: 20px 0 20px 0;
+	}
+</style>
