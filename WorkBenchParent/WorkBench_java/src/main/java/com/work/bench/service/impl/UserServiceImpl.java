@@ -2,10 +2,9 @@ package com.work.bench.service.impl;
 
 import cn.hutool.crypto.digest.BCrypt;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.work.bench.dto.User.UserLoginDTO;
-import com.work.bench.enums.DeleteStatus;
+import com.work.bench.enums.GenderType;
 import com.work.bench.exception.BusinessException;
 import com.work.bench.mapper.UserMapper;
 import com.work.bench.pojo.User;
@@ -14,8 +13,6 @@ import com.work.bench.utils.BaseContext;
 import com.work.bench.vo.user.UserInfoVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.builder.BuilderException;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 /**
@@ -87,8 +84,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
 
         // 登录成功
-        UserInfoVO userInfoVO = new UserInfoVO();
-        BeanUtils.copyProperties(user, userInfoVO);
+        UserInfoVO userInfoVO = UserInfoVO.builder()
+                .userName(user.getUserName())
+                .nickName(user.getNickName())
+                .avatar(user.getAvatar())
+                .email(user.getEmail())
+                .phone(user.getPhone())
+                .signature(user.getSignature())
+                .birthday(user.getBirthday())
+                .theme(user.getTheme())
+                .gender(GenderType.getDescByCode(user.getGender()))
+                .build();
+
+
 
         // 将用户id存储在当前线程上
         BaseContext.setCurrentId(Long.valueOf(user.getId()));

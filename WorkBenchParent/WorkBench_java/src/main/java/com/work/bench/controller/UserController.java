@@ -1,6 +1,5 @@
 package com.work.bench.controller;
 
-import cn.hutool.system.UserInfo;
 import com.work.bench.dto.User.UserLoginDTO;
 import com.work.bench.service.UserService;
 import com.work.bench.utils.Result;

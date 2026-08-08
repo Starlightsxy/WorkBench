@@ -1,5 +1,6 @@
 package com.work.bench.vo.user;
 
+import lombok.Builder;
 import lombok.Data;
 
 /**
@@ -10,6 +11,7 @@ import lombok.Data;
  * @date 2026/8/8 20:25
  */
 @Data
+@Builder
 public class UserInfoVO {
     // 用户名
     private String userName;
@@ -22,7 +24,9 @@ public class UserInfoVO {
     // 电话
     private String phone;
     // 性别 (0未知 1男 2女)'
-    private Integer gender;
+//    private Integer gender;
+    // 性别字段
+    private String gender;
     // 生日
     private Long birthday;
     // 个性签名

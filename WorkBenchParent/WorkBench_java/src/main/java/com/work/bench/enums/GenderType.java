@@ -26,4 +26,21 @@ public enum GenderType {
         this.desc = desc;
     }
 
+    /**
+     * 根据 code 获取对应性别的 desc
+     * @param code
+     * @return
+     */
+    public static String getDescByCode(Integer code) {
+        if(code != null) {
+            for (GenderType genderType : GenderType.values()) {
+                if (genderType.code.equals(code)) {
+                    return genderType.desc;
+                }
+            }
+        }
+        return GenderType.UNKNOWN.desc;
+
+    }
+
 }
