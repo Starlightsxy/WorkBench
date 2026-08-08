@@ -12,7 +12,7 @@ export type UserLoginVO = {
 	avatar : string;
 	email : string;
 	phone : string,
-	gender : number;
+	gender : string;
 	birthday : number;
 	signature : string;
 	theme : string;

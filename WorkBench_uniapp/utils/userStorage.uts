@@ -1,0 +1,21 @@
+import { UserLoginVO } from "../type"
+
+// 用户的状态管理
+
+// key
+const KEY = "user-storage"
+
+// 存储用户信息
+export const setUserStorage = (data : UserLoginVO) => {
+	uni.setStorageSync(KEY, data)
+}
+
+// 获取用户信息
+export const getUserStorage = () => {
+	return uni.getStorageSync(KEY)
+}
+
+// 删除用户信息
+export const removeUserStorage = () => {
+	uni.removeStorageSync(KEY)
+}

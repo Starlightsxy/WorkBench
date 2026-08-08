@@ -1,0 +1,30 @@
+// // utils/request.ts
+// import { http } from 'uview-plus'
+
+// /* 1. 全局配置 */
+// http.setConfig((config) => {
+// 	config.baseURL = 'https://api.example.com'  // api地址
+// 	config.timeout = 8000  // 单位毫秒，对应8秒
+// 	config.loadingText = '加载中...'
+// 	config.loading = true          // 开启 loading 动画
+// 	return config
+// })
+
+// /* 2. 请求拦截 */
+// http.interceptors.request.use((config) => {
+// 	const token = uni.getStorageSync('token')
+// 	if (token) config.header.Authorization = `Bearer ${token}`
+// 	return config
+// })
+
+// /* 3. 响应拦截 */
+// http.interceptors.response.use(
+// 	(response) => response.data,
+// 	(err) => {
+// 		// 🔥 强制断言，让 UTS 闭嘴
+// 		(uni as any).$u.toast(err.message || '网络错误')
+// 		return Promise.reject(err)
+// 	}
+// )
+
+// export default http

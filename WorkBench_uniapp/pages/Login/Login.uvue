@@ -1,6 +1,8 @@
 <script setup lang="uts">
-	import { LoginDTO } from '../../type/module/user';
+	import { ApiResponse } from '../../type';
+	import { LoginDTO, UserLoginVO } from '../../type/module/user';
 	import { getLoginStorage, removeLoginStorage, setLoginStorage } from '../../utils/LoginStorage';
+import { setUserStorage } from '../../utils/userStorage';
 
 	const loginForm = reactive<LoginDTO>({
 		account: '',
@@ -10,7 +12,7 @@
 	onLoad(() => {
 		// 获取缓存回写表单
 		const loginCache = getLoginStorage() as LoginDTO | null
-		if(loginCache){
+		if (loginCache) {
 			loginForm.account = loginCache.account;
 			loginForm.password = loginCache.password;
 			loginForm.remember = loginCache.remember
@@ -22,14 +24,34 @@
 		const formData = e.detail.value
 		loginForm.account = formData['account'] as string
 		loginForm.password = formData['password'] as string
-		if (loginForm.remember) {
-			setLoginStorage(loginForm)
-		} else {
-			removeLoginStorage()
-		}
-		// uni.switchTab({
-		// 	url: "/pages/User/User"
-		// })
+
+
+		uni.request({
+			url: "http://localhost:3000/user/login",
+			data: formData,
+			method: "POST",
+			success: (e : RequestSuccess<ApiResponse<UserLoginVO>>) => {
+				// 成功回调
+				if (e.data?.code === 1) {
+					// 根据是否选中记住选项将信息存储在本地
+					if (loginForm.remember) {
+						setLoginStorage(loginForm)
+					} else {
+						removeLoginStorage()
+					}
+
+					// 将用户信息存储在本地
+					setUserStorage(e.data?.data)
+					return
+				}
+				// 失败回调
+				console.log(e.data?.message)
+
+			},
+			fail: (e) => {
+
+			}
+		})
 	}
 </script>
 
