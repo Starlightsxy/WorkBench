@@ -1,7 +1,6 @@
 package com.work.bench.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.work.bench.pojo.Bill;
 import com.work.bench.pojo.User;
 
 /**
