@@ -1,0 +1,15 @@
+import { LoginDTO } from "../type/module/user";
+const KEY = "login-storage"
+// 缓存登录信息
+export const setLoginStorage = (data : LoginDTO) => {
+	uni.setStorageSync(KEY, data)
+}
+// 获取登录信息
+export const getLoginStorage = () => {
+	return uni.getStorageSync(KEY)
+}
+
+// 删除登录信息
+export const removeLoginStorage = () => {
+	uni.removeStorageSync(KEY)
+}
