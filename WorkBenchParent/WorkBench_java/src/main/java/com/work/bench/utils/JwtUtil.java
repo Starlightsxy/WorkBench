@@ -1,4 +1,4 @@
-package com.work.bench.security;
+package com.work.bench.utils;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

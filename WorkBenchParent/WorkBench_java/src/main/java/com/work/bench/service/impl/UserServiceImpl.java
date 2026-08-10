@@ -6,7 +6,7 @@ import com.work.bench.enums.GenderType;
 import com.work.bench.exception.BusinessException;
 import com.work.bench.mapper.UserMapper;
 import com.work.bench.pojo.User;
-import com.work.bench.security.JwtUtil;
+import com.work.bench.utils.JwtUtil;
 import com.work.bench.security.LoginUser;
 import com.work.bench.service.UserService;
 import com.work.bench.vo.user.LoginVO;
