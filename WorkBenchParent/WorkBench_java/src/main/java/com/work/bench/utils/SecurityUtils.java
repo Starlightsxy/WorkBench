@@ -15,7 +15,8 @@ import org.springframework.stereotype.Component;
 public class SecurityUtils {
 
     /**
-     * 由于我现在的 JwtAuthenticationFilter 在校验token时，只是存放了userId 在security中，所以这里定义一个通用方法来进行获取
+     * 由于我现在的 JwtAuthenticationFilter 在校验token时，只是存放了userId在security中，后期获取时可以比较麻烦
+     * 所以这里定义一个通用方法来进行获取
      * @return
      */
     public static Integer getUserId() {
