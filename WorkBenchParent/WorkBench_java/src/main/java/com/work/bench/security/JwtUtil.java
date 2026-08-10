@@ -4,7 +4,9 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
 import java.util.Date;
 
 /**
@@ -14,13 +16,14 @@ import java.util.Date;
  * @Package com.work.bench.security
  * @date 2026/8/10 16:36
  */
+@Component
 public class JwtUtil {
     // 密钥
     private static final String SECRET_KEY = "workbench-jwt-secret-key-workbench";
-
-
     // token有效期
     private static final Long EXPIRE_TIME = 7 * 24 * 60 * 60 * 1000L;
+
+    private final SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
 
     /**
      * 生成 token
@@ -41,35 +44,24 @@ public class JwtUtil {
                 .setExpiration(expire)
                 // .addClaims()// 配置自定义字段 适用于RBAC
                 // 签名算法 HS256算法 的 SecretKey 至少 256 bit 换算一下也就是32byte，
-                .signWith(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()), SignatureAlgorithm.HS256)
+                .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
     /**
-     * 解析 token 获取用户 id
+     * 校验 token
      *
      * @param token
      * @return
      */
-    public Integer getUserId(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()))
-                .build()
-                .parseClaimsJws(token).getBody();
-        return Integer.parseInt(claims.getSubject());
-    }
-
-    /**
-     * 校验 token
-     * @param token
-     * @return
-     */
-    public boolean validateToken(String token) {
-        try{
-            getUserId(token);
-            return true;
-        }catch (Exception e){
-            return false;
+    public Claims validateToken(String token) {
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token).getBody();
+        } catch (Exception e) {
+            return null;
         }
     }
 
