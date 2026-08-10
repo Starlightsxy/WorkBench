@@ -1,22 +1,19 @@
 package com.work.bench.service.impl;
 
-import cn.hutool.crypto.digest.BCrypt;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.work.bench.dto.User.UserLoginDTO;
 import com.work.bench.enums.GenderType;
 import com.work.bench.exception.BusinessException;
 import com.work.bench.mapper.UserMapper;
 import com.work.bench.pojo.User;
+import com.work.bench.security.JwtUtil;
 import com.work.bench.security.LoginUser;
 import com.work.bench.service.UserService;
-import com.work.bench.utils.BaseContext;
 import com.work.bench.vo.user.LoginVO;
 import com.work.bench.vo.user.UserInfoVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.*;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +30,8 @@ import org.springframework.stereotype.Service;
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
     private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
+
 
     /**
      * 用户登录方法
@@ -85,8 +84,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         Integer userId = loginUser.getUser().getId();
 
-        // 生成 JWT
-        String token = "12";
+        // 生成 token
+        String token = jwtUtil.createToken(userId);
 
         // 查询用户信息
         UserInfoVO userInfo = getUserInfo(userId);
