@@ -1,17 +1,51 @@
-<template>
-	<!-- #ifdef APP -->
-	<scroll-view style="flex:1">
-	<!-- #endif -->
-		
-	<!-- #ifdef APP -->
-	</scroll-view>
-	<!-- #endif -->
-</template>
+	<script setup>
+	import { ApiResponse } from '../../type';
+	import { getTokenStorage } from '../../storage'
+	onLoad(() => {
+		getUser()
+		console.log(getTokenStorage())
+	})
 
-<script setup>
-		
-</script>
+	const getUser = () => {
+		uni.request({
+			url: "http://localhost:3000/user/getId",
+			method: "GET",
+			header: {
+				Authorization: 'Bearer ' + getTokenStorage()
+			},
+			success: (e : RequestSuccess<ApiResponse<number>>) => {
+				// 失败
+				if (e.statusCode !== 200) {
+					uni.showToast({
+						title: e.data + ""
+					})
+					return
+				}
+				// 成功
+				if (e.data?.code === 1) {
+					console.log(e.data.data)
+				}
 
-<style>
-		
-</style>
+
+			}
+		})
+	}
+	</script>
+	<template>
+		<!-- #ifdef APP -->
+		<scroll-view style="flex:1">
+		<!-- #endif -->
+
+		<!-- #ifdef APP -->
+		</scroll-view>
+		<!-- #endif -->
+		<view>
+
+		</view>
+	</template>
+
+
+
+	<style>
+
+	</style>

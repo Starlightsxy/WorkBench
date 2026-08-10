@@ -31,6 +31,12 @@
 			data: formData,
 			method: "POST",
 			success: (e : RequestSuccess<ApiResponse<LoginUser<UserInfoVO>>>) => {
+				if (e.statusCode !== 200) {
+					uni.showToast({
+						title: e.data?.message
+					})
+					return
+				}
 				// 成功回调
 				if (e.data?.code === 1) {
 					// 根据是否选中记住选项将信息存储在本地
@@ -44,7 +50,13 @@
 					setUserStorage(e.data.data.userInfoVO)
 					// 并且还需要存储token信息
 					setTokenStorage(e.data.data.token)
-
+					uni.showToast({
+						title:e.data.message
+					})
+					// 跳转到首页
+					uni.switchTab({
+						url: "/pages/index/index"
+					})
 					return
 				}
 				// 失败回调
