@@ -8,11 +8,16 @@ import com.work.bench.enums.GenderType;
 import com.work.bench.exception.BusinessException;
 import com.work.bench.mapper.UserMapper;
 import com.work.bench.pojo.User;
+import com.work.bench.security.LoginUser;
 import com.work.bench.service.UserService;
 import com.work.bench.utils.BaseContext;
+import com.work.bench.vo.user.LoginVO;
 import com.work.bench.vo.user.UserInfoVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.*;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 /**
@@ -26,7 +31,8 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
-    private final UserMapper userMapper;
+
+    private final AuthenticationManager authenticationManager;
 
     /**
      * 用户登录方法
@@ -35,56 +41,69 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 返回 UserInfoVO 信息
      */
     @Override
-    public UserInfoVO userLogin(UserLoginDTO userLoginDTO) {
-
+    public LoginVO userLogin(UserLoginDTO userLoginDTO) {
+        log.info("开始认证");
         String account = userLoginDTO.getAccount();
-        User user;
+        String password = userLoginDTO.getPassword();
 
         if ((account == null || account.isEmpty())) {
             throw new BusinessException("账号不能为空");
         }
-        if (userLoginDTO.getPassword() == null || userLoginDTO.getPassword().isEmpty()) {
+        if (password == null || password.isEmpty()) {
             throw new BusinessException("密码不能为空");
         }
 
-        // 不同登陆方式
-        LambdaQueryWrapper<User> userWrapper = new LambdaQueryWrapper<>();
-        userWrapper.select(
-                        User::getId,
-                        User::getUserName,
-                        User::getNickName,
-                        User::getPassword,
-                        User::getAvatar,
-                        User::getEmail,
-                        User::getPhone,
-                        User::getGender,
-                        User::getBirthday,
-                        User::getSignature,
-                        User::getTheme
-                )
-                .and(w ->
-                        w.eq(User::getUserName, account)
-                                .or()
-                                .eq(User::getEmail, account)
-                                .or()
-                                .eq(User::getPhone, account)
-                )
-                .eq(User::getDeleted, 0);
+        // spring security 认证
+        Authentication authentication = null;
+        try {
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(account, password)
+            );
+        } catch (LockedException e) {
+            log.error(e.getMessage());
+            throw new BusinessException("账号已删除");
 
+        } catch (DisabledException e) {
+            log.error(e.getMessage());
+            throw new BusinessException("账号已禁用");
 
-        user = userMapper.selectOne(userWrapper);
-        // 判断用户是否存在
-        if (user == null) {
-            throw new BusinessException("账号不存在或已禁用");
+        } catch (AccountExpiredException e) {
+            log.error(e.getMessage());
+            throw new BusinessException("账号已过期");
+
+        } catch (CredentialsExpiredException e) {
+            log.error(e.getMessage());
+            throw new BusinessException("密码已过期");
+
+        } catch (BadCredentialsException e) {
+            log.error(e.getMessage());
+            throw new BusinessException("账号或密码错误");
+
         }
 
-        // 判断密码是否正确
-        if (!BCrypt.checkpw(userLoginDTO.getPassword(), user.getPassword())) {
-            throw new BusinessException("密码错误");
-        }
+        LoginUser loginUser = (LoginUser) authentication.getPrincipal();
 
-        // 登录成功
-        UserInfoVO userInfoVO = UserInfoVO.builder()
+        Integer userId = loginUser.getUser().getId();
+
+        // 生成 JWT
+        String token = "12";
+
+        // 查询用户信息
+        UserInfoVO userInfo = getUserInfo(userId);
+        // 封装成VO返回前端
+        return new LoginVO(token, userInfo);
+    }
+
+    /**
+     * 根据用户id，获取用户信息
+     *
+     * @param userId
+     * @return
+     */
+    @Override
+    public UserInfoVO getUserInfo(Integer userId) {
+        User user = getById(userId);
+        return UserInfoVO.builder()
                 .userName(user.getUserName())
                 .nickName(user.getNickName())
                 .avatar(user.getAvatar())
@@ -95,14 +114,5 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 .theme(user.getTheme())
                 .gender(GenderType.getDescByCode(user.getGender()))
                 .build();
-
-
-
-        // 将用户id存储在当前线程上
-        BaseContext.setCurrentId(Long.valueOf(user.getId()));
-
-        log.info("登录方法");
-
-        return userInfoVO;
     }
 }

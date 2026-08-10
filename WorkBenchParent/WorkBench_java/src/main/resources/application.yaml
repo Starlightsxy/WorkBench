@@ -6,7 +6,3 @@ spring:
     username: root
     password: root
     driver-class-name: com.mysql.cj.jdbc.Driver
-  security: # spring security 认证
-    user:
-      name: admin
-      password: admin

@@ -3,6 +3,7 @@ package com.work.bench.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.work.bench.dto.User.UserLoginDTO;
 import com.work.bench.pojo.User;
+import com.work.bench.vo.user.LoginVO;
 import com.work.bench.vo.user.UserInfoVO;
 
 /**
@@ -18,5 +19,7 @@ public interface UserService extends IService<User> {
      * @param userLoginDTO 统一账号接收登录信息
      * @return 返回 UserInfoVO 信息
      */
-    UserInfoVO userLogin(UserLoginDTO userLoginDTO);
+    LoginVO userLogin(UserLoginDTO userLoginDTO);
+
+    UserInfoVO getUserInfo(Integer userId);
 }

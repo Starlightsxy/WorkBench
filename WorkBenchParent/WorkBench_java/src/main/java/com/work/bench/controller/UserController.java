@@ -3,7 +3,7 @@ package com.work.bench.controller;
 import com.work.bench.dto.User.UserLoginDTO;
 import com.work.bench.service.UserService;
 import com.work.bench.utils.Result;
-import com.work.bench.vo.user.UserInfoVO;
+import com.work.bench.vo.user.LoginVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,7 +30,7 @@ public class UserController {
      * @return 返回登录信息
      */
     @PostMapping("/login")
-    public Result<UserInfoVO> login(@RequestBody UserLoginDTO userLoginDTO) {
+    public Result<LoginVO> login(@RequestBody UserLoginDTO userLoginDTO) {
         return Result.success("登录成功", userService.userLogin(userLoginDTO));
     }
 }
