@@ -1,4 +1,5 @@
-import { LoginDTO } from "../type/module/user";
+import { LoginDTO } from "../../type"
+
 const KEY = "login-storage"
 // 缓存登录信息
 export const setLoginStorage = (data : LoginDTO) => {

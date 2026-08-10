@@ -1,12 +1,14 @@
-import { UserLoginVO } from "../type"
+
 
 // 用户的状态管理
+
+import { UserInfoVO } from "../../type"
 
 // key
 const KEY = "user-storage"
 
 // 存储用户信息
-export const setUserStorage = (data : UserLoginVO) => {
+export const setUserStorage = (data : UserInfoVO) => {
 	uni.setStorageSync(KEY, data)
 }
 

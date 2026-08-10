@@ -1,0 +1,19 @@
+// token 的状态管理
+// key
+const KEY = "token-storage"
+// 存储token
+export const setTokenStorage = (data : string) => {
+	uni.setStorageSync(KEY, data)
+}
+
+
+// 获取token
+export const getTokenStorage = () => {
+	return uni.getStorageSync(KEY)
+
+}
+
+// 删除token
+export const removeTokenStorage = () => {
+	uni.removeStorageSync(KEY)
+}

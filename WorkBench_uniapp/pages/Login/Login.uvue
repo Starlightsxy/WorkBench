@@ -1,8 +1,8 @@
 <script setup lang="uts">
+	import { getLoginStorage, removeLoginStorage, setLoginStorage, setTokenStorage, setUserStorage } from '../../storage';
 	import { ApiResponse } from '../../type';
-	import { LoginDTO, UserLoginVO } from '../../type/module/user';
-	import { getLoginStorage, removeLoginStorage, setLoginStorage } from '../../utils/LoginStorage';
-import { setUserStorage } from '../../utils/userStorage';
+	import { LoginDTO, LoginUser, UserInfoVO } from '../../type/module/user';
+
 
 	const loginForm = reactive<LoginDTO>({
 		account: '',
@@ -30,7 +30,7 @@ import { setUserStorage } from '../../utils/userStorage';
 			url: "http://localhost:3000/user/login",
 			data: formData,
 			method: "POST",
-			success: (e : RequestSuccess<ApiResponse<UserLoginVO>>) => {
+			success: (e : RequestSuccess<ApiResponse<LoginUser<UserInfoVO>>>) => {
 				// 成功回调
 				if (e.data?.code === 1) {
 					// 根据是否选中记住选项将信息存储在本地
@@ -41,7 +41,10 @@ import { setUserStorage } from '../../utils/userStorage';
 					}
 
 					// 将用户信息存储在本地
-					setUserStorage(e.data?.data)
+					setUserStorage(e.data.data.userInfoVO)
+					// 并且还需要存储token信息
+					setTokenStorage(e.data.data.token)
+
 					return
 				}
 				// 失败回调

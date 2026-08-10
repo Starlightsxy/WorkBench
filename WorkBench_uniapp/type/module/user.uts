@@ -5,8 +5,8 @@ export type LoginDTO = {
 	remember ?: boolean;// 记住我
 }
 
-// 登陆成功响应数据展示
-export type UserLoginVO = {
+// 用户数据展示
+export type UserInfoVO = {
 	userName : string;
 	nickName : string;
 	avatar : string;
@@ -16,4 +16,10 @@ export type UserLoginVO = {
 	birthday : number;
 	signature : string;
 	theme : string;
+}
+
+// 登录成功后的数据展示
+export type LoginUser<T> = {
+	token : string;
+	userInfoVO : T;
 }
