@@ -78,6 +78,8 @@ public class SecurityConfig {
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf().disable()// 禁用csrf 因为使用jwt所以不需要这个
+                // 使用 CorsConfig
+                .cors(cors -> {})
 
                 // 配置拦截
                 .authorizeHttpRequests(auth -> auth
@@ -104,7 +106,7 @@ public class SecurityConfig {
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
                             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                             response.setContentType("application/json;charset=UTF-8");
-                            response.getWriter().write("没有权限访问");
+                            response.getWriter().write("权限不足");
                         })
                 )
                 // 添加过滤

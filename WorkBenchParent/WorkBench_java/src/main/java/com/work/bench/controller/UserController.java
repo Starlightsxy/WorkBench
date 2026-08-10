@@ -3,6 +3,7 @@ package com.work.bench.controller;
 import com.work.bench.dto.User.UserLoginDTO;
 import com.work.bench.service.UserService;
 import com.work.bench.utils.Result;
+import com.work.bench.utils.SecurityUtils;
 import com.work.bench.vo.user.LoginVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -14,9 +15,6 @@ import org.springframework.web.bind.annotation.*;
  * @Package com.work.bench.controller
  * @date 2026/8/3 16:34
  */
-@CrossOrigin(
-        origins = "http://localhost:5173"
-)
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/user")
@@ -32,5 +30,14 @@ public class UserController {
     @PostMapping("/login")
     public Result<LoginVO> login(@RequestBody UserLoginDTO userLoginDTO) {
         return Result.success("登录成功", userService.userLogin(userLoginDTO));
+    }
+
+    /**
+     * 测试获取用户id
+     * @return
+     */
+    @GetMapping("/getId")
+    public Result<Integer> getUser(){
+        return Result.success(SecurityUtils.getUserId());
     }
 }
