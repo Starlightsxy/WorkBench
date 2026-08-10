@@ -88,9 +88,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String token = jwtUtil.createToken(userId);
 
         // 查询用户信息
-        UserInfoVO userInfo = getUserInfo(userId);
+        UserInfoVO userInfoVO = getUserInfo(userId);
         // 封装成VO返回前端
-        return new LoginVO(token, userInfo);
+        return new LoginVO(token, userInfoVO);
     }
 
     /**
