@@ -33,7 +33,8 @@
 			success: (e : RequestSuccess<ApiResponse<LoginUser<UserInfoVO>>>) => {
 				if (e.statusCode !== 200) {
 					uni.showToast({
-						title: e.data?.message
+						title: e.data?.message,
+						icon:'error'
 					})
 					return
 				}
@@ -51,7 +52,8 @@
 					// 并且还需要存储token信息
 					setTokenStorage(e.data.data.token)
 					uni.showToast({
-						title:e.data.message
+						title:e.data.message,
+						icon:'success'
 					})
 					// 跳转到首页
 					uni.switchTab({
@@ -60,7 +62,10 @@
 					return
 				}
 				// 失败回调
-				console.log(e.data?.message)
+				uni.showToast({
+					title: e.data?.message,
+					icon:'error'
+				})
 
 			},
 			fail: (e) => {
