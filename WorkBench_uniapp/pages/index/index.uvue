@@ -8,7 +8,7 @@
 
 	const getUser = () => {
 		uni.request({
-			url: "http://localhost:3000/user/getId",
+			url: "http://localhost:3000/user/getUserInfo",
 			method: "GET",
 			header: {
 				Authorization: 'Bearer ' + getTokenStorage()

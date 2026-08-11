@@ -30,7 +30,7 @@
 			url: "http://localhost:3000/user/login",
 			data: formData,
 			method: "POST",
-			success: (e : RequestSuccess<ApiResponse<LoginUser<UserInfoVO>>>) => {
+			success: (e : RequestSuccess<ApiResponse<LoginUser>>) => {
 				if (e.statusCode !== 200) {
 					uni.showToast({
 						title: e.data?.message,
@@ -47,9 +47,9 @@
 						removeLoginStorage()
 					}
 
-					// 将用户信息存储在本地
-					setUserStorage(e.data.data.userInfoVO)
-					// 并且还需要存储token信息
+					// // 将用户信息存储在本地
+					// setUserStorage(e.data.data.userInfoVO)
+					// // 并且还需要存储token信息
 					setTokenStorage(e.data.data.token)
 					uni.showToast({
 						title:e.data.message,
