@@ -1,5 +1,6 @@
 package com.work.bench.utils;
 
+import com.work.bench.vo.user.UserInfoVO;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -19,8 +20,8 @@ public class SecurityUtils {
      * 所以这里定义一个通用方法来进行获取
      * @return
      */
-    public static Integer getUserId() {
+    public static UserInfoVO getUserInfo() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return (Integer) authentication.getPrincipal();
+        return (UserInfoVO) authentication.getPrincipal();
     }
 }

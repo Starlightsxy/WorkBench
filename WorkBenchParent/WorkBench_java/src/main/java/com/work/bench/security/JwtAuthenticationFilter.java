@@ -1,12 +1,15 @@
 package com.work.bench.security;
 
+import com.work.bench.enums.RedisCacheKey;
 import com.work.bench.utils.JwtUtil;
+import com.work.bench.vo.user.UserInfoVO;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -27,6 +30,7 @@ import java.util.Collections;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final RedisTemplate<String, Object> jsonRedisTemplate;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -44,11 +48,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // 校验 token
         Claims claims = jwtUtil.validateToken(token);
         if (claims != null) {
-            Integer userId = Integer.parseInt(claims.getSubject());
+            int userId = Integer.parseInt(claims.getSubject());
 
+            UserInfoVO userInfoVO = (UserInfoVO) jsonRedisTemplate.opsForValue()
+                    .get(RedisCacheKey.REDIS_CACHE_USER_KEY.getValue() + userId);
 
             UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(userId, null, Collections.emptyList());
+                    new UsernamePasswordAuthenticationToken(userInfoVO, null, Collections.emptyList());
 
 
             // spring security 保存登录用户

@@ -13,5 +13,4 @@ import lombok.Data;
 @AllArgsConstructor
 public class LoginVO {
     private String token;
-    private UserInfoVO userInfoVO;
 }

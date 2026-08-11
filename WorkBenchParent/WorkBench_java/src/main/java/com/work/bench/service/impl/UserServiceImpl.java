@@ -3,6 +3,7 @@ package com.work.bench.service.impl;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.work.bench.dto.User.UserLoginDTO;
 import com.work.bench.enums.GenderType;
+import com.work.bench.enums.RedisCacheKey;
 import com.work.bench.exception.BusinessException;
 import com.work.bench.mapper.UserMapper;
 import com.work.bench.pojo.User;
@@ -13,9 +14,12 @@ import com.work.bench.vo.user.LoginVO;
 import com.work.bench.vo.user.UserInfoVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * 用户服务实现类
@@ -29,6 +33,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
+    private final RedisTemplate<String, Object> jsonRedisTemplate;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
 
@@ -37,10 +42,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * 用户登录方法
      *
      * @param userLoginDTO 统一账号接收登录信息
-     * @return 返回 UserInfoVO 信息
+     * @return 返回 LoginVO 信息
      */
     @Override
     public LoginVO userLogin(UserLoginDTO userLoginDTO) {
+
+
         log.info("开始认证");
         String account = userLoginDTO.getAccount();
         String password = userLoginDTO.getPassword();
@@ -81,7 +88,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
 
         LoginUser loginUser = (LoginUser) authentication.getPrincipal();
-
         Integer userId = loginUser.getUser().getId();
 
         // 生成 token
@@ -89,8 +95,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         // 查询用户信息
         UserInfoVO userInfoVO = getUserInfo(userId);
+
+        // 用户信息存储在redis中
+        jsonRedisTemplate.opsForValue().set(
+                RedisCacheKey.REDIS_CACHE_USER_KEY.getValue() + userId,
+                userInfoVO,
+                7,
+                TimeUnit.DAYS
+        );
+
+
         // 封装成VO返回前端
-        return new LoginVO(token, userInfoVO);
+        return new LoginVO(token);
     }
 
     /**

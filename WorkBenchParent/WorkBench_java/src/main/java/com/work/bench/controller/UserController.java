@@ -5,6 +5,7 @@ import com.work.bench.service.UserService;
 import com.work.bench.utils.Result;
 import com.work.bench.utils.SecurityUtils;
 import com.work.bench.vo.user.LoginVO;
+import com.work.bench.vo.user.UserInfoVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,8 +37,8 @@ public class UserController {
      * 测试获取用户id
      * @return
      */
-    @GetMapping("/getId")
-    public Result<Integer> getUser(){
-        return Result.success(SecurityUtils.getUserId());
+    @GetMapping("/getUserInfo")
+    public Result<UserInfoVO> getUser(){
+        return Result.success(SecurityUtils.getUserInfo());
     }
 }

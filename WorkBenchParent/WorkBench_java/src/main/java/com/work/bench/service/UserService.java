@@ -17,7 +17,7 @@ public interface UserService extends IService<User> {
     /**
      * 用户登录方法
      * @param userLoginDTO 统一账号接收登录信息
-     * @return 返回 UserInfoVO 信息
+     * @return 返回 LoginVO 信息
      */
     LoginVO userLogin(UserLoginDTO userLoginDTO);
 

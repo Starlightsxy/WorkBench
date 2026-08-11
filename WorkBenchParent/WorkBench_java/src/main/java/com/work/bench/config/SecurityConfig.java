@@ -32,16 +32,22 @@ public class SecurityConfig {
     // jwt filter链
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    /**
+     * 提供调用认证的入口
+     * @param configuration
+     * @return
+     * @throws Exception
+     */
     @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration configuration
-    ) throws Exception {
-
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
-
     }
 
 
+    /**
+     * 告诉 Spring Security 以什么方式进行密码加密和校验，
+     * @return 这里使用的是BCrypt模式
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
 
@@ -49,6 +55,10 @@ public class SecurityConfig {
 
     }
 
+    /**
+     * 用户认证具体怎么做
+     * @return
+     */
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider =
@@ -78,7 +88,7 @@ public class SecurityConfig {
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf().disable()// 禁用csrf 因为使用jwt所以不需要这个
-                // 使用 CorsConfig
+                // 使用 CorsConfig 跨域
                 .cors(cors -> {})
 
                 // 配置拦截
