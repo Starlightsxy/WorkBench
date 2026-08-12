@@ -11,35 +11,39 @@
 	})
 	onLoad(() => {
 		// 获取缓存回写表单
-		const loginCache = getLoginStorage() as LoginDTO | null
+		const loginCache = getLoginStorage() as LoginDTO
+
 		if (loginCache) {
-			loginForm.account = loginCache.account;
-			loginForm.password = loginCache.password;
-			loginForm.remember = loginCache.remember
+
+			loginForm.account = loginCache!.account;
+			loginForm.password = loginCache!.password;
+			loginForm.remember = loginCache!.remember;
 		}
 	})
 
 	const handleLogin = (e : UniFormSubmitEvent) => {
+		console.log('登录')
 		// 设置表单值
 		const formData = e.detail.value
 		loginForm.account = formData['account'] as string
 		loginForm.password = formData['password'] as string
+		uni.request<ApiResponse<LoginUser>>({
 
-
-		uni.request({
-			url: "http://localhost:3000/user/login",
+			url: "http://192.168.164.254:3000/user/login",
 			data: formData,
 			method: "POST",
 			success: (e : RequestSuccess<ApiResponse<LoginUser>>) => {
+				if (!e.data) return;
 				if (e.statusCode !== 200) {
 					uni.showToast({
-						title: e.data?.message,
-						icon:'error'
+						title: e.data.message,
+						icon: 'error'
 					})
 					return
 				}
+
 				// 成功回调
-				if (e.data?.code === 1) {
+				if (e.data.code === 1) {
 					// 根据是否选中记住选项将信息存储在本地
 					if (loginForm.remember) {
 						setLoginStorage(loginForm)
@@ -47,13 +51,11 @@
 						removeLoginStorage()
 					}
 
-					// // 将用户信息存储在本地
-					// setUserStorage(e.data.data.userInfoVO)
 					// // 并且还需要存储token信息
 					setTokenStorage(e.data.data.token)
 					uni.showToast({
-						title:e.data.message,
-						icon:'success'
+						title: e.data.message,
+						icon: 'success'
 					})
 					// 跳转到首页
 					uni.switchTab({
@@ -63,15 +65,17 @@
 				}
 				// 失败回调
 				uni.showToast({
-					title: e.data?.message,
-					icon:'error'
+					title: e.data.message,
+					icon: 'error'
 				})
 
-			},
-			fail: (e) => {
-
+			},fail(e){
+				console.log(e)
 			}
 		})
+	}
+	const onRememberChange = (e : UniCheckboxGroupChangeEvent) => {
+		loginForm.remember = e.detail.value.length > 0
 	}
 </script>
 
@@ -93,7 +97,7 @@
 					<text class="txt-center" style="color: darkgray; ">登录以管理你的生活点滴</text>
 				</view>
 				<view style="margin-top: 40px;width: 100%;display: flex;align-items: center;">
-					<form @submit="handleLogin" style="width: 300px; ">
+					<form @submit="handleLogin" style="width: 75%; ">
 						<view class="form-item-account">
 							<view>
 								<text class="fts-14 mb-5 ">姓名/邮箱/手机号</text>
@@ -113,9 +117,7 @@
 							</view>
 						</view>
 						<view class="flex-space-between mt-10">
-							<checkbox-group
-								@change="(e: UniCheckboxGroupChangeEvent) => loginForm.remember = e.detail.value.length > 0"
-								name="remember">
+							<checkbox-group @change="onRememberChange" name="remember">
 								<checkbox value="1" :checked="loginForm.remember">记住我</checkbox>
 							</checkbox-group>
 							<text class="fts-14" style="color: #4f7cff;">忘记密码?</text>
@@ -123,6 +125,7 @@
 						<view class="mt-20">
 							<button form-type="submit" type="primary">登录</button>
 						</view>
+
 					</form>
 				</view>
 			</view>

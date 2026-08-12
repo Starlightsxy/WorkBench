@@ -10,30 +10,30 @@
 		{
 			"path": "pages/index/index",
 			"style": {
-				"navigationBarTitleText": "首页"
+				"navigationStyle": "custom"
 			}
 		}, {
 			"path": "pages/User/User",
 			"style": {
-				"navigationBarTitleText": "用户"
+				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/Bill/Bill",
 			"style": {
-				"navigationBarTitleText": "账单"
+				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/anniversary/anniversary",
 			"style": {
-				"navigationBarTitleText": "纪念"
+			"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/Tasks/Tasks",
 			"style": {
-				"navigationBarTitleText": "任务待办"
+				"navigationStyle": "custom"
 			}
 		}
 

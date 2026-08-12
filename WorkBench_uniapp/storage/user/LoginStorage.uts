@@ -6,8 +6,8 @@ export const setLoginStorage = (data : LoginDTO) => {
 	uni.setStorageSync(KEY, data)
 }
 // 获取登录信息
-export const getLoginStorage = () => {
-	return uni.getStorageSync(KEY)
+export const getLoginStorage = () : LoginDTO | null => {
+	return uni.getStorageSync(KEY) as LoginDTO | null
 }
 
 // 删除登录信息

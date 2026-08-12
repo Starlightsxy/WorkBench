@@ -1,51 +1,189 @@
-	<script setup>
-	import { ApiResponse } from '../../type';
-	import { getTokenStorage } from '../../storage'
-	onLoad(() => {
-		getUser()
-		console.log(getTokenStorage())
+<script setup lang="uts">
+	import { getTokenStorage, getUserStorage, setUserStorage } from '../../storage';
+	import { ApiResponse, UserInfoVO } from '../../type';
+
+
+
+	// 用户信息
+	const userInfo = ref<UserInfoVO>({
+		userName: '',
+		nickName: '',
+		avatar: '',
+		email: '',
+		phone: '',
+		gender: '',
+		birthday: 0,
+		signature: '',
+		theme: ''
+
 	})
 
+	// 获取时间
+	const now = new Date()
+	const dayStr = ['一', '二', '三', '四', '五', '六', '七']
+
+	// 判断当前时间应该是那个
+	const timeGreeting = computed(() => {
+		const nowHourse = now.getHours()
+		if (nowHourse >= 0 && nowHourse < 6) return "凌晨好：";
+		if (nowHourse >= 6 && nowHourse < 11) return "早上好：";
+		if (nowHourse >= 11 && nowHourse < 13) return "中午好：";
+		if (nowHourse >= 13 && nowHourse < 18) return "下午好：";
+		if (nowHourse >= 18 && nowHourse < 24) return "晚上好：";
+		return "";
+	})
+	// 当前月份和周几
+	const nowDay = computed(() => {
+		return `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 周${dayStr[now.getDay() - 1]}`
+
+	})
+
+	// 获取用户信息
 	const getUser = () => {
-		uni.request({
-			url: "http://localhost:3000/user/getUserInfo",
+		uni.request<ApiResponse<UserInfoVO>>({
+			url: "http://192.168.164.254:3000/user/getUserInfo",
 			method: "GET",
 			header: {
 				Authorization: 'Bearer ' + getTokenStorage()
 			},
-			success: (e : RequestSuccess<ApiResponse<number>>) => {
+			success: (e : RequestSuccess<ApiResponse<UserInfoVO>>) => {
+				if (!e.data) return
 				// 失败
 				if (e.statusCode !== 200) {
-					uni.showToast({
-						title: e.data + ""
-					})
+					console.log('失败')
 					return
 				}
 				// 成功
-				if (e.data?.code === 1) {
-					console.log(e.data.data)
+				if (e.data.code == 1) {
+					setUserStorage(e.data.data)
+					userInfo.value = e.data.data
 				}
-
-
 			}
 		})
 	}
-	</script>
-	<template>
-		<!-- #ifdef APP -->
-		<scroll-view style="flex:1">
-		<!-- #endif -->
 
-		<!-- #ifdef APP -->
-		</scroll-view>
-		<!-- #endif -->
-		<view>
-
+	onLoad(() => {
+		getUser()
+	})
+</script>
+<template>
+	<view class="container">
+		<!-- nav-bar -->
+		<view class="navbar  ">
+			<view class="flex-space-between">
+				<view class="flex-space-between">
+					<image class="nvbar-img" src="/static/image/avatar.png" mode=""></image>
+					<view class="pl-5 txt-nvbar">
+						<text style="font-size: 20px; font-weight: bold;color: #004fcb;">WorkBench</text>
+					</view>
+				</view>
+				<view>
+					<image class="nvbar-img" src="/static/image/index/setting.png" mode=""></image>
+				</view>
+			</view>
 		</view>
-	</template>
+		<!-- welcome -->
+		<scroll-view direction="vertical" style="height: 92%; padding-bottom:10px; border: 1px black solid;">
+			<view class="mt-20 pl-10" style="box-sizing: border-box;">
+				<view>
+					<text class="fts-200" style="font-weight: bold;">
+						{{timeGreeting}}{{userInfo?.nickName}}
+					</text>
+					<text class="fts-14">
+						{{`今天是${nowDay}，让一切尽然有序`}}
+					</text>
+				</view>
+				<text style="font-size: 50px;">
+					<!-- 当分钟是0-9区间时使用 String(now.getMinutes()).padStart(2, '0') 补0 -->
+					{{now.getHours() + ":" + now.getMinutes().toString().padStart(2, '0')}}
+				</text>
+			</view>
+			<!-- 今日待办 -->
+			<view class="tasks">
+				<image class="homeImg" src="/static/image/index/setting.png" mode=""></image>
+				<text class='fts-20' style="padding:14">今日待办</text>
+			</view>
+			<!-- 倒数纪念日 -->
+			<view class="anniversary">
+				<image class="homeImg" src="/static/image/index/setting.png" mode=""></image>
+				<text class='fts-20' style="padding:14">即将到来</text>
+			</view>
+			<!-- 最近账单 -->
+			<view class="bill">
+				<image class="homeImg" src="/static/image/index/setting.png" mode=""></image>
+				<text class='fts-20' style="padding:14">最近账单</text>
+				<view class="mt-10" style="background-color: red;  " v-for="item in 30">
+					1
+				</view>
+			</view>
+		</scroll-view>
 
 
+	</view>
+</template>
 
-	<style>
+<style>
+	.container {
+		background-color: #f9f9ff;
+		height: 100%;
+		/* 或 100dvh */
+		padding-top: var(--status-bar-height);
+		/* 状态栏高度 */
+		box-sizing: border-box;
+		/* 确保 padding 包含在高度内 */
 
-	</style>
+	}
+
+	.navbar {
+		justify-content: center;
+		height: 8%;
+		width: 100%;
+		border-bottom: 1px #e0e3e5 solid;
+		/* 底部内边距，可调整数值 */
+		box-sizing: border-box;
+
+	}
+
+	.nvbar-img {
+		width: 44px;
+		height: 44px;
+		padding: 3px;
+		border-radius: 50%;
+
+	}
+
+	.txt-nvbar {
+		justify-content: center;
+	}
+
+	.tasks,
+	.anniversary {
+		margin-left: 5%;
+		margin-right: 5%;
+		box-sizing: border-box;
+		height: 20%;
+		width: 90%;
+		border: 1px #e0e3e5 solid;
+		border-radius: 5px;
+		padding-bottom: 10px;
+		margin-top: 20px;
+	}
+
+	.bill {
+		margin-left: 5%;
+		margin-right: 5%;
+		box-sizing: border-box;
+		width: 90%;
+		border: 1px #e0e3e5 solid;
+		border-radius: 5px;
+		margin-top: 20px;
+		padding-bottom: 10px;
+	}
+
+	.homeImg {
+		width: 20px;
+		height: 20px;
+
+		border: 1px red solid;
+	}
+</style>

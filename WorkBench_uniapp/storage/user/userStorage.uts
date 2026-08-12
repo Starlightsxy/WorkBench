@@ -12,9 +12,19 @@ export const setUserStorage = (data : UserInfoVO) => {
 	uni.setStorageSync(KEY, data)
 }
 
-// 获取用户信息
-export const getUserStorage = () => {
-	return uni.getStorageSync(KEY)
+export const getUserStorage = () : UserInfoVO | null => {
+	const data = uni.getStorageSync(KEY)
+	if (data == null) return null
+	// 如果 data 是字符串，尝试解析为对象
+	if (typeof data === 'string') {
+		try {
+			return JSON.parse(data) as UserInfoVO
+		} catch {
+			return null
+		}
+	}
+	// 如果已经是对象，直接返回（需要确保类型正确）
+	return data as UserInfoVO
 }
 
 // 删除用户信息

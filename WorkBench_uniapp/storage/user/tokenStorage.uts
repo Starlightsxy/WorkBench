@@ -8,8 +8,8 @@ export const setTokenStorage = (data : string) => {
 
 
 // 获取token
-export const getTokenStorage = () => {
-	return uni.getStorageSync(KEY)
+export const getTokenStorage = ():string |null=> {
+	return uni.getStorageSync(KEY) as string| null
 
 }
 

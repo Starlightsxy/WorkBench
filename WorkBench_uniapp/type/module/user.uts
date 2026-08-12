@@ -9,11 +9,11 @@ export type LoginDTO = {
 export type UserInfoVO = {
 	userName : string;
 	nickName : string;
-	avatar : string;
+	avatar : string | null;
 	email : string;
 	phone : string,
 	gender : string;
-	birthday : number;
+	birthday : number | null;
 	signature : string;
 	theme : string;
 }
