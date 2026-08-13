@@ -14,11 +14,7 @@ public enum AnniversaryType {
     // 纪念日类型
     ANNIVERSARY(1, "纪念日"),
     BIRTHDAY(2, "生日"),
-    FESTIVAL(3, "节日"),
-
-    // 是否每年重复
-    REPEAT_TRUE(1, "是"),
-    REPEAT_FALSE(2, "否");
+    FESTIVAL(3, "节日");
 
     private final Integer code;
     private final String desc;
@@ -27,4 +23,6 @@ public enum AnniversaryType {
         this.code = code;
         this.desc = desc;
     }
+
+
 }

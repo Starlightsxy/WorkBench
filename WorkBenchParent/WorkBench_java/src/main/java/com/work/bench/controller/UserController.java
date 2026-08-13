@@ -7,6 +7,7 @@ import com.work.bench.utils.SecurityUtils;
 import com.work.bench.vo.user.LoginVO;
 import com.work.bench.vo.user.UserInfoVO;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/user")
+@Slf4j
 public class UserController {
 
     private final UserService userService;
@@ -39,6 +41,7 @@ public class UserController {
      */
     @GetMapping("/getUserInfo")
     public Result<UserInfoVO> getUser(){
+        log.info("进来了");
         return Result.success(SecurityUtils.getUserInfo());
     }
 }
