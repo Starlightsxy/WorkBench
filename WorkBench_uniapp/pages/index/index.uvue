@@ -61,10 +61,50 @@
 			}
 		})
 	}
+	const pageList = ref([0, 25, 50, 75, 100])
+	type Anniversary = {
+		name : string;
+		day : number;
+	}
+	const annList = ref<Anniversary[]>([
+		{
+			name: "结婚纪念日",
+			day: 2
+		},
+		{
+			name: "生日",
+			day: 3
+		}, {
+			name: "开学日",
+			day: 5
+		}
+	])
+	// 当前随机展示的条目（用 ref，而非 computed）
+	const annRandom = ref<Anniversary>({ name: '', day: 0 });
+	// 刷新随机项的函数
+	function refreshRandom() : void {
+		const list = annList.value;
+		if (list.length > 0) {
+			const idx = Math.floor(Math.random() * list.length);
+			annRandom.value = list[idx];
+		}
+	}
+	let timerId : number | null = null;
 
 	onLoad(() => {
 		getUser()
+		refreshRandom(); // 首次立即随机
+		timerId = setInterval(() => {
+			refreshRandom(); // 每隔 2 秒换一次
+		}, 2000);
 	})
+	onUnmounted(() => {
+	    const id = timerId;
+	    if (id !== null) {
+	        clearInterval(id);
+	        timerId = null;
+	    }
+	});
 </script>
 <template>
 	<view class="container">
@@ -83,7 +123,7 @@
 			</view>
 		</view>
 		<!-- welcome -->
-		<scroll-view direction="vertical" style="height: 92%; padding-bottom:10px; border: 1px black solid;">
+		<scroll-view direction="vertical" style="height: 92%; padding-bottom:20px; ">
 			<view class="mt-20 pl-10" style="box-sizing: border-box;">
 				<view>
 					<text class="fts-200" style="font-weight: bold;">
@@ -99,21 +139,99 @@
 				</text>
 			</view>
 			<!-- 今日待办 -->
-			<view class="tasks">
-				<image class="homeImg" src="/static/image/index/setting.png" mode=""></image>
-				<text class='fts-20' style="padding:14">今日待办</text>
+			<view class="tasks" style="background-color: #ffffff;">
+				<view style="margin: 10px;">
+					<view class="tasks-item">
+						<view
+							style="background-color: #0066ff; border-radius: 50%;width: 40px;height: 40px; justify-content: center;align-items: center;">
+							<image class="homeImg" src="/static/image/index/task_index.png"></image>
+						</view>
+						<text class='fts-20 pl-10'>今日待办</text>
+					</view>
+					<!-- 进度条 -->
+					<view style="margin-top: 50px;">
+						<!-- 带颜色和宽度的进度条 -->
+						<view style="display: flex; flex-direction: row; align-items: center;">
+							<text style="font-size: 24;">3</text>
+							<text class="fts-12"
+								style="margin-left: 4rpx; align-self: flex-end; color:#868787 ; margin-bottom: 6rpx;">/5已完成</text>
+						</view>
+						<progress :percent="pageList[1]" :stroke-width="6"
+							style="border-radius: 3px; margin-top: 5px;" />
+
+					</view>
+				</view>
+
 			</view>
 			<!-- 倒数纪念日 -->
-			<view class="anniversary">
-				<image class="homeImg" src="/static/image/index/setting.png" mode=""></image>
-				<text class='fts-20' style="padding:14">即将到来</text>
+			<view class="anniversary" style="background-color: #d9e1fe;">
+				<view class="flex-space-between" style="margin: 10px;">
+					<view class="ann-item">
+						<view
+							style="background-color: #ffffff; border-radius: 50%; width: 40px;height: 40px; justify-content: center;align-items: center;">
+							<image class="homeImg" src="/static/image/index/ann_index.png" mode=""></image>
+						</view>
+						<text class='fts-20 pl-10'>即将到来</text>
+					</view>
+					<view style=" box-sizing: border-box; padding:3px ;background-color: white;border-radius: 5px; ">
+						<text class="fts-14">纪念日</text>
+					</view>
+				</view>
+
+				<view class="pl-20 pb-10" style=" box-sizing: border-box;">
+					<view style="">
+						<text>距离&nbsp;{{annRandom.name}}</text>
+					</view>
+					<view style="display: flex;padding-left: -4px; flex-direction: row; align-items: center;">
+						<text class="fts-12 mr-5" style="position: relative; top: 7rpx;">还有</text>
+						<text style="font-size: 24;">{{annRandom.day}}</text>
+						<text class="fts-12 ml-5" style="position: relative; top: 7rpx;">天</text>
+					</view>
+				</view>
 			</view>
 			<!-- 最近账单 -->
-			<view class="bill">
-				<image class="homeImg" src="/static/image/index/setting.png" mode=""></image>
-				<text class='fts-20' style="padding:14">最近账单</text>
-				<view class="mt-10" style="background-color: red;  " v-for="item in 30">
-					1
+			<view class="bill" style="background-color: #ffffff;">
+				<view class="flex-space-between " style="margin: 10px;">
+					<view class="bill-item">
+						<view
+							style="background-color: #d8e3fb; border-radius: 50%;width: 40px;height: 40px; justify-content: center;align-items: center;">
+							<image class="homeImg" src="/static/image/index/bill_index.png" mode=""></image>
+						</view>
+						<text class='fts-20 pl-10'>最近账单</text>
+					</view>
+					<view style="">
+						<text class="fts-14" style="color: blue; ">查看全部</text>
+					</view>
+				</view>
+				<!-- 账单列表 只统计最近10个 -->
+				<view class=" bill-items flex-space-between" v-for="item in 10">
+					<view class="bill-left">
+						<view
+							style="background-color: #d8e3fb;  border-radius: 5px; width: 30px;height:30px; justify-content: center;align-items: center;">
+							<image style="width: 20px;height:20px; " src="/static/image/index/bill_index.png" mode="">
+							</image>
+						</view>
+						<view class="ml-10">
+							<text class="fts-16">山姆超市采购</text>
+							<text class="fts-14">今天 10:30</text>
+						</view>
+					</view>
+					<view style="box-sizing: border-box;">
+						<text class="fts-14">-￥435.00</text>
+					</view>
+				</view>
+				<!-- 总计 -->
+				<view class="mb-10 flex-space-between">
+					<view>
+						<text class="fts-14  ml-5">
+							当天消费：1200
+						</text>
+					</view>
+					<view>
+						<text class="fts-14  mr-5">
+							最近消费：1200
+						</text>
+					</view>
 				</view>
 			</view>
 		</scroll-view>
@@ -161,12 +279,20 @@
 		margin-left: 5%;
 		margin-right: 5%;
 		box-sizing: border-box;
-		height: 20%;
 		width: 90%;
 		border: 1px #e0e3e5 solid;
-		border-radius: 5px;
+		border-radius: 10px;
 		padding-bottom: 10px;
 		margin-top: 20px;
+	}
+
+	.tasks-item,
+	.ann-item,
+	.bill-item {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		/* margin: 20px 0 0 20px; */
 	}
 
 	.bill {
@@ -177,13 +303,32 @@
 		border: 1px #e0e3e5 solid;
 		border-radius: 5px;
 		margin-top: 20px;
-		padding-bottom: 10px;
+
 	}
 
 	.homeImg {
-		width: 20px;
-		height: 20px;
+		width: 35px;
+		height: 35px;
 
-		border: 1px red solid;
+	}
+
+	.bill-items {
+		/* width: 100%; */
+		margin-left: 10px;
+		margin-right: 10px;
+		/* padding: 10px; */
+		padding: 10px 0 10px 0;
+		box-sizing: border-box;
+		border-bottom: 1px #d9e2fc solid;
+		margin-bottom: 10px;
+	}
+
+	.bill-left {
+
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		box-sizing: border-box;
+		/* border: 1px red solid; */
 	}
 </style>

@@ -1,0 +1,16 @@
+{
+    "id": "yll1024335892-ayi-progress",
+    "name": "progress进度条",
+    "displayName": "progress进度条",
+    "version": "1.0.0",
+    "description": "progress进度条",
+    "keywords": [
+        "progress,进度条"
+    ],
+    "dcloudext": {
+        "category": [
+            "前端组件",
+            "通用组件"
+        ]
+    }
+}
