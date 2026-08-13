@@ -1,6 +1,7 @@
 package com.work.bench.security;
 
 import com.work.bench.enums.RedisCacheKey;
+import com.work.bench.utils.BaseContext;
 import com.work.bench.utils.JwtUtil;
 import com.work.bench.vo.user.UserInfoVO;
 import io.jsonwebtoken.Claims;
@@ -48,8 +49,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // 校验 token
         Claims claims = jwtUtil.validateToken(token);
         if (claims != null) {
-            int userId = Integer.parseInt(claims.getSubject());
-
+            Integer userId = Integer.parseInt(claims.getSubject());
+            // 将用户id存储到当前线程
+            BaseContext.setCurrentId(userId);
             UserInfoVO userInfoVO = (UserInfoVO) jsonRedisTemplate.opsForValue()
                     .get(RedisCacheKey.REDIS_CACHE_USER_KEY.getValue() + userId);
 

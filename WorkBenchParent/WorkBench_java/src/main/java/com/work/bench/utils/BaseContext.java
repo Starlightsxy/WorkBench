@@ -9,15 +9,15 @@ package com.work.bench.utils;
  */
 public class BaseContext {
     //  设置一个ThreadLocal对象，用于存储当前线程的用户id
-    public static ThreadLocal<Long> threadLocal = new ThreadLocal<>();
+    public static ThreadLocal<Integer> threadLocal = new ThreadLocal<>();
 
     //  设置一个方法，用于存储当前线程的用户id
-    public static void setCurrentId(Long id) {
+    public static void setCurrentId(Integer id) {
         threadLocal.set(id);
     }
 
     //  设置一个方法，用于获取当前线程的用户id
-    public static Long getCurrentId() {
+    public static Integer getCurrentId() {
         return threadLocal.get();
     }
 
