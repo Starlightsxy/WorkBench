@@ -1,5 +1,6 @@
 package com.work.bench.controller;
 
+import com.work.bench.annotation.AroundLog;
 import com.work.bench.dto.User.UserLoginDTO;
 import com.work.bench.service.UserService;
 import com.work.bench.utils.Result;
@@ -30,6 +31,7 @@ public class UserController {
      * @param userLoginDTO 统一登录接收
      * @return 返回登录信息
      */
+    @AroundLog
     @PostMapping("/login")
     public Result<LoginVO> login(@RequestBody UserLoginDTO userLoginDTO) {
         return Result.success("登录成功", userService.userLogin(userLoginDTO));

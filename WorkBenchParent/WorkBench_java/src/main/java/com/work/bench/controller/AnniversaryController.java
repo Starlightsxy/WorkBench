@@ -1,5 +1,7 @@
 package com.work.bench.controller;
 
+import com.work.bench.annotation.AroundLog;
+import com.work.bench.annotation.BeforeLog;
 import com.work.bench.service.AnniversaryService;
 import com.work.bench.utils.BaseContext;
 import com.work.bench.utils.Result;
@@ -29,6 +31,7 @@ public class AnniversaryController {
      * 根据当前用户id查询纪念日信息
      * @return
      */
+    @AroundLog
     @GetMapping("/anniversary/lists")
     public Result<List<AnniversaryVO>> listAnniversary() {
         return Result.success(anniversaryService.getListsByUserId(BaseContext.getCurrentId()));
