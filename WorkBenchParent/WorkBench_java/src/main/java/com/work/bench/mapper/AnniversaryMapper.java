@@ -15,6 +15,6 @@ import java.util.List;
  * @date 2026/8/3 16:20
  */
 public interface AnniversaryMapper extends BaseMapper<Anniversary> {
-    @Select("select title,type,icon,remark,anniversary_date from tb_anniversary where user_id = #{userId}")
+    @Select("select title,type,icon,remark,color,anniversary_date from tb_anniversary where user_id = #{userId}")
     List<Anniversary> selectAnniversarysByUserId(@Param("userId") Integer userId);
 }

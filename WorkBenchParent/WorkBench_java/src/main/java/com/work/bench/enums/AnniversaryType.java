@@ -15,7 +15,7 @@ public enum AnniversaryType {
     // 纪念日类型
     ANNIVERSARY(1, "纪念日"),
     BIRTHDAY(2, "生日"),
-    FESTIVAL(3, "节日");
+    FESTIVAL(3, "倒计时日");
 
     private final Integer code;
     private final String desc;

@@ -22,6 +22,8 @@ public class AnniversaryVO {
     private String type;
     // 图标
     private String icon;
+    // 颜色
+    private String color;
     // 备注
     private String remark;
 }

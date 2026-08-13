@@ -39,7 +39,9 @@ public class AnniversaryServiceImpl extends ServiceImpl<AnniversaryMapper, Anniv
                     item.getTitle(),
                     item.getAnniversaryDate(),
                     AnniversaryType.getDescByCode(item.getType()),
+
                     item.getIcon(),
+                    item.getColor(),
                     item.getRemark());
             anniversaryVOList.add(anniversaryVO);
         });
