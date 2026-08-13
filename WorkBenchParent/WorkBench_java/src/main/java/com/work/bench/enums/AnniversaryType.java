@@ -4,6 +4,7 @@ import lombok.Getter;
 
 /**
  * 纪念日
+ *
  * @author 洁心未眠
  * @Package com.work.bench.enums
  * @date 2026/8/3 17:14
@@ -24,5 +25,16 @@ public enum AnniversaryType {
         this.desc = desc;
     }
 
+    public static String getDescByCode(Integer code) {
+        if (code != null) {
+            for (AnniversaryType item : AnniversaryType.values()) {
+                if (item.getCode().equals(code)) {
+                    return item.getDesc();
+                }
+            }
+        }
+        return "";
+
+    }
 
 }

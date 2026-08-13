@@ -1,7 +1,6 @@
 package com.work.bench.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.work.bench.enums.AnniversaryRepeatTypeEnum;
 import com.work.bench.enums.AnniversaryType;
 import com.work.bench.mapper.AnniversaryMapper;
 import com.work.bench.pojo.Anniversary;
@@ -39,7 +38,7 @@ public class AnniversaryServiceImpl extends ServiceImpl<AnniversaryMapper, Anniv
             AnniversaryVO anniversaryVO = new AnniversaryVO(
                     item.getTitle(),
                     item.getAnniversaryDate(),
-                    AnniversaryRepeatTypeEnum.getDescByCode(item.getType()),
+                    AnniversaryType.getDescByCode(item.getType()),
                     item.getIcon(),
                     item.getRemark());
             anniversaryVOList.add(anniversaryVO);
