@@ -5,6 +5,7 @@ import com.work.bench.enums.AnniversaryType;
 import com.work.bench.mapper.AnniversaryMapper;
 import com.work.bench.pojo.Anniversary;
 import com.work.bench.service.AnniversaryService;
+import com.work.bench.utils.EnumUtils;
 import com.work.bench.vo.anniversary.AnniversaryVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -38,7 +39,7 @@ public class AnniversaryServiceImpl extends ServiceImpl<AnniversaryMapper, Anniv
             AnniversaryVO anniversaryVO = new AnniversaryVO(
                     item.getTitle(),
                     item.getAnniversaryDate(),
-                    AnniversaryType.getDescByCode(item.getType()),
+                    EnumUtils.getDescByCode(AnniversaryType.class, item.getType()),
 
                     item.getIcon(),
                     item.getColor(),

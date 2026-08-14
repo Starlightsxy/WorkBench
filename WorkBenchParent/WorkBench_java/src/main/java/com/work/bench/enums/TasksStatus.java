@@ -4,28 +4,26 @@ import com.work.bench.common.BaseEnum;
 import lombok.Getter;
 
 /**
- * 纪念日
+ * 任务状态
  *
  * @author 洁心未眠
  * @Package com.work.bench.enums
- * @date 2026/8/3 17:14
+ * @date 2026/8/3 19:32
  */
 @Getter
-public enum AnniversaryType implements BaseEnum {
+public enum TasksStatus implements BaseEnum {
+    IN_PROGRESS(1, "进行中"), // 默认
+    COMPLETED(2, "已完成"),
+    CANCELLED(3, "已取消");
 
-    // 纪念日类型
-    ANNIVERSARY(1, "纪念日"),
-    BIRTHDAY(2, "生日"),
-    FESTIVAL(3, "倒计时日");
 
     private final Integer code;
     private final String desc;
 
-    AnniversaryType(Integer code, String desc) {
+    TasksStatus(Integer code, String desc) {
         this.code = code;
         this.desc = desc;
     }
-
 
 
 }

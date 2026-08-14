@@ -1,5 +1,6 @@
 package com.work.bench.enums;
 
+import com.work.bench.common.BaseEnum;
 import lombok.Getter;
 
 /**
@@ -10,7 +11,7 @@ import lombok.Getter;
  * @date 2026/8/13 18:58
  */
 @Getter
-public enum AnniversaryRepeatTypeEnum {
+public enum AnniversaryRepeatTypeEnum implements BaseEnum {
     REPEAT_TRUE(1, "是"),
     REPEAT_FALSE(2, "否");
 
@@ -22,15 +23,4 @@ public enum AnniversaryRepeatTypeEnum {
         this.desc = desc;
     }
 
-    public static String getDescByCode(Integer code) {
-        if (code != null) {
-            for (AnniversaryRepeatTypeEnum item : AnniversaryRepeatTypeEnum.values()) {
-                if (item.code.equals(code)) {
-                    return item.desc;
-                }
-            }
-        }
-        return "";
-
-    }
 }

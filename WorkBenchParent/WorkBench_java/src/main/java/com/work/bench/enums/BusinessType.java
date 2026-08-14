@@ -1,5 +1,6 @@
 package com.work.bench.enums;
 
+import com.work.bench.common.BaseEnum;
 import lombok.Getter;
 
 /**
@@ -10,7 +11,7 @@ import lombok.Getter;
  * @date 2026/8/3 17:18
  */
 @Getter
-public enum BusinessType {
+public enum BusinessType implements BaseEnum {
     INSERT(1, "新增"),
     DELETE(2, "删除"),
     UPDATE(3, "修改"),

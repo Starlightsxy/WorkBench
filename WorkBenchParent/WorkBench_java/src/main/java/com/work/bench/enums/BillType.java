@@ -1,5 +1,6 @@
 package com.work.bench.enums;
 
+import com.work.bench.common.BaseEnum;
 import lombok.Getter;
 
 /**
@@ -10,7 +11,7 @@ import lombok.Getter;
  * @date 2026/8/3 17:08
  */
 @Getter
-public enum BillType {
+public enum BillType implements BaseEnum {
 
     INCOME(1, "收入"),
 

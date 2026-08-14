@@ -1,5 +1,6 @@
 package com.work.bench.enums;
 
+import com.work.bench.common.BaseEnum;
 import lombok.Getter;
 
 /**
@@ -10,7 +11,7 @@ import lombok.Getter;
  * @date 2026/8/3 17:06
  */
 @Getter
-public enum GenderType {
+public enum GenderType implements BaseEnum {
 
 
     UNKNOWN(0, "未知"),
@@ -26,21 +27,5 @@ public enum GenderType {
         this.desc = desc;
     }
 
-    /**
-     * 根据 code 获取对应性别的 desc
-     * @param code
-     * @return
-     */
-    public static String getDescByCode(Integer code) {
-        if(code != null) {
-            for (GenderType genderType : GenderType.values()) {
-                if (genderType.code.equals(code)) {
-                    return genderType.desc;
-                }
-            }
-        }
-        return GenderType.UNKNOWN.desc;
-
-    }
 
 }

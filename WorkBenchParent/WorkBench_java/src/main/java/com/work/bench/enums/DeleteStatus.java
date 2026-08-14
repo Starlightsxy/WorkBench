@@ -1,5 +1,6 @@
 package com.work.bench.enums;
 
+import com.work.bench.common.BaseEnum;
 import lombok.Getter;
 
 /**
@@ -10,7 +11,7 @@ import lombok.Getter;
  * @date 2026/8/3 17:05
  */
 @Getter
-public enum DeleteStatus {
+public enum DeleteStatus implements BaseEnum {
 
     UNDELETED(0, "未删除"), // 未删除
 

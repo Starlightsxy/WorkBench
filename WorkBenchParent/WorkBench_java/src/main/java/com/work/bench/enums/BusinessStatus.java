@@ -1,5 +1,6 @@
 package com.work.bench.enums;
 
+import com.work.bench.common.BaseEnum;
 import lombok.Getter;
 
 /**
@@ -10,7 +11,7 @@ import lombok.Getter;
  * @date 2026/8/3 17:19
  */
 @Getter
-public enum BusinessStatus {
+public enum BusinessStatus implements BaseEnum {
 
     FAIL(0, "失败"),
     SUCCESS(1, "成功");

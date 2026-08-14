@@ -1,20 +1,16 @@
 package com.work.bench.enums;
 
+import com.work.bench.common.BaseEnum;
 import lombok.Getter;
 
 /**
- * 待办任务枚举
- *
+ * 任务级别
  * @author 洁心未眠
  * @Package com.work.bench.enums
- * @date 2026/8/3 19:32
+ * @date 2026/8/14 18:52
  */
 @Getter
-public enum TasksType {
-    PENDING(0, "待办"),
-    IN_PROGRESS(1, "进行中"),
-    COMPLETED(2, "已完成"),
-    CANCELLED(3, "已取消"),
+public enum TasksLevel implements BaseEnum {
     LOW(1, "低"),
     NORMAL(2, "中"),
     HIGH(3, "高");
@@ -22,8 +18,9 @@ public enum TasksType {
     private final Integer code;
     private final String desc;
 
-    TasksType(Integer code, String desc) {
+    TasksLevel(Integer code, String desc) {
         this.code = code;
         this.desc = desc;
     }
+
 }
