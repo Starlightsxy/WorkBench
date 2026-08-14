@@ -17,7 +17,7 @@ import java.util.Date;
  * @date 2026/8/10 16:36
  */
 @Component
-public class JwtUtil {
+public final class JwtUtil {
     // 密钥
     private static final String SECRET_KEY = "workbench-jwt-secret-key-workbench";
     // token有效期

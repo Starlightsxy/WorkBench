@@ -7,7 +7,7 @@ package com.work.bench.utils;
  * @Package com.work.bench.utils
  * @date 2026/8/3 16:41
  */
-public class BaseContext {
+public final class BaseContext {
     //  设置一个ThreadLocal对象，用于存储当前线程的用户id
     public static ThreadLocal<Integer> threadLocal = new ThreadLocal<>();
 

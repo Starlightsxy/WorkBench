@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
  * @date 2026/8/10 19:17
  */
 @Component
-public class SecurityUtils {
+public final class SecurityUtils {
 
     /**
      * 由于我现在的 JwtAuthenticationFilter 在校验token时，只是存放了userId在security中，后期获取时可以比较麻烦

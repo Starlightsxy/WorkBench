@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-public class Result<T> {
+public final class Result<T> {
     private Integer code;    // 状态码，如 0，1
     private String message;  // 提示信息
     private T data;          // 具体数据
