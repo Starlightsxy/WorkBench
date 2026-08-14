@@ -43,7 +43,6 @@ public class UserController {
      */
     @GetMapping("/getUserInfo")
     public Result<UserInfoVO> getUser(){
-        log.info("进来了");
         return Result.success(SecurityUtils.getUserInfo());
     }
 }

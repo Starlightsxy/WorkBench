@@ -7,6 +7,7 @@ import com.work.bench.enums.RedisCacheKey;
 import com.work.bench.exception.BusinessException;
 import com.work.bench.mapper.UserMapper;
 import com.work.bench.pojo.User;
+import com.work.bench.utils.EnumUtils;
 import com.work.bench.utils.JwtUtil;
 import com.work.bench.security.LoginUser;
 import com.work.bench.service.UserService;
@@ -127,7 +128,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 .signature(user.getSignature())
                 .birthday(user.getBirthday())
                 .theme(user.getTheme())
-                .gender(GenderType.getDescByCode(user.getGender()))
+                .gender(EnumUtils.getDescByCode(GenderType.class, user.getGender()))
                 .build();
     }
 }
