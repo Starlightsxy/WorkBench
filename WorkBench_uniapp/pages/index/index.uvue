@@ -1,222 +1,226 @@
 <script setup lang="uts">
-import { getTokenStorage, getUserStorage, setUserStorage } from '../../storage';
-import { ApiResponse, ApiResponseUTS, UserInfoVO } from '../../type';
+	import { getTokenStorage, getUserStorage, setUserStorage } from '../../storage';
+	import { ApiResponse, ApiResponseUTS, UserInfoVO } from '../../type';
 
-// 用户信息
-const userInfo = ref<UserInfoVO>({
-    userName: '',
-    nickName: '',
-    avatar: '',
-    email: '',
-    phone: '',
-    gender: '',
-    birthday: 0,
-    signature: '',
-    theme: ''
-});
+	// 用户信息
+	const userInfo = ref<UserInfoVO>({
+		userName: '',
+		nickName: '',
+		avatar: '',
+		email: '',
+		phone: '',
+		gender: '',
+		birthday: 0,
+		signature: '',
+		theme: ''
+	});
 
-// 获取时间
-const now = new Date();
-const dayStr = ['一', '二', '三', '四', '五', '六','日'];
+	// 获取时间
+	const now = new Date();
+	const dayStr = ['一', '二', '三', '四', '五', '六', '日'];
 
-const timeGreeting = computed(() => {
-    const nowHourse = now.getHours();
-    if (nowHourse >= 0 && nowHourse < 6) return "凌晨好：";
-    if (nowHourse >= 6 && nowHourse < 11) return "早上好：";
-    if (nowHourse >= 11 && nowHourse < 13) return "中午好：";
-    if (nowHourse >= 13 && nowHourse < 18) return "下午好：";
-    if (nowHourse >= 18 && nowHourse < 24) return "晚上好：";
-    return "";
-});
+	const timeGreeting = computed(() => {
+		const nowHourse = now.getHours();
+		if (nowHourse >= 0 && nowHourse < 6) return "凌晨好：";
+		if (nowHourse >= 6 && nowHourse < 11) return "早上好：";
+		if (nowHourse >= 11 && nowHourse < 13) return "中午好：";
+		if (nowHourse >= 13 && nowHourse < 18) return "下午好：";
+		if (nowHourse >= 18 && nowHourse < 24) return "晚上好：";
+		return "";
+	});
 
-const nowDay = computed(() => {
-    return `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 周${dayStr[now.getDay() - 1]}`;
-});
+	// 获取当前日期时间年月日周几
+	const nowDay = computed(() => {
+		return `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 周${dayStr[now.getDay() - 1]}`;
+	});
 
-// 获取用户信息
-const getUser = () => {
-    uni.request<ApiResponse<UserInfoVO>>({
-        url: "http://192.168.164.254:3000/user/getUserInfo",
-        method: "GET",
-        header: {
-            Authorization: 'Bearer ' + getTokenStorage()
-        },
-        success: (e: RequestSuccess<ApiResponse<UserInfoVO>>) => {
-            if (!e.data) return;
-            if (e.statusCode !== 200) {
-                console.log('失败');
-                return;
-            }
-            if (e.data.code == 1 && e.data.data) {
+	// 获取用户信息
+	const getUser = () => {
+		uni.request<ApiResponse<UserInfoVO>>({
+			url: "http://192.168.164.254:3000/user/getUserInfo",
+			method: "GET",
+			header: {
+				Authorization: 'Bearer ' + getTokenStorage()
+			},
+			success: (e : RequestSuccess<ApiResponse<UserInfoVO>>) => {
+				if (!e.data) return;
+				if (e.statusCode !== 200) {
+					console.log('失败');
+					return;
+				}
+				if (e.data.code == 1 && e.data.data) {
+					setUserStorage(e.data.data);
+					userInfo.value = e.data.data;
+				}
+			}
+		});
+	};
 
-                setUserStorage(e.data.data);
-                userInfo.value = e.data.data;
-            }
-        }
-    });
-};
+	// 任务进度条
+	const pageList = ref([0, 25, 50, 75, 100]);
+	// 后端返回过来所赋值的数据
+	const annList = ref<UTSJSONObject[]>([]);
+	// 随机展示的数据
+	const annRandom = ref<UTSJSONObject>({
+		title: '',
+		anniversaryDate: 0,
+		type: '',
+		icon: '',
+		remark: '',
+		color: '',
+		age: 0
+	});
 
-// 任务进度条
-const pageList = ref([0, 25, 50, 75, 100]);
+	/**
+	 * 计算距离下一次生日还有多少天（输入秒级时间戳）
+	 */
+	function getDaysUntilNextBirthday(birthdayTimestampSeconds : number) : number {
+		const birthMs = birthdayTimestampSeconds * 1000;
+		const birth = new Date(birthMs);
+		const month = birth.getMonth();
+		const day = birth.getDate();
+		const now = new Date();
+		let nextBirthday = new Date(now.getFullYear(), month, day);
+		if (nextBirthday.getTime() < now.getTime()) {
+			nextBirthday = new Date(now.getFullYear() + 1, month, day);
+		}
+		const diffMs = nextBirthday.getTime() - now.getTime();
+		const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+		return Math.max(0, diffDays);
+	}
 
-const annList = ref<UTSJSONObject[]>([]);
-const annRandom = ref<UTSJSONObject>({
-    title: '',
-    anniversaryDate: 0,
-    type: '',
-    icon: '',
-    remark: '',
-    color: '',
-    age: 0
-});
+	// 计算下一次过生日时的年龄
+	function getNextBirthdayAge(birthdayTimestampSeconds : number) : number {
+		const days = getDaysUntilNextBirthday(birthdayTimestampSeconds);
+		const birth = new Date(birthdayTimestampSeconds * 1000);
+		const target = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+		return target.getFullYear() - birth.getFullYear();
+	}
 
-/**
- * 计算距离下一次生日还有多少天（输入秒级时间戳）
- */
-function getDaysUntilNextBirthday(birthdayTimestampSeconds: number): number {
-    const birthMs = birthdayTimestampSeconds * 1000;
-    const birth = new Date(birthMs);
-    const month = birth.getMonth();
-    const day = birth.getDate();
-    const now = new Date();
-    let nextBirthday = new Date(now.getFullYear(), month, day);
-    if (nextBirthday.getTime() < now.getTime()) {
-        nextBirthday = new Date(now.getFullYear() + 1, month, day);
-    }
-    const diffMs = nextBirthday.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-    return Math.max(0, diffDays);
-}
+	// 根据剩余天数推算出对应的年月日
+	const annRandomDate = computed(() : string => {
+		const days = annRandom.value["anniversaryDate"] as number;
+		if (days <= 0) return '';
+		const target = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+		return `${target.getFullYear()}年${target.getMonth() + 1}月${target.getDate()}日`;
+	});
 
-// 计算下一次过生日时的年龄
-function getNextBirthdayAge(birthdayTimestampSeconds: number): number {
-    const days = getDaysUntilNextBirthday(birthdayTimestampSeconds);
-    const birth = new Date(birthdayTimestampSeconds * 1000);
-    const target = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
-    return target.getFullYear() - birth.getFullYear();
-}
+	// 后端返回的是绝对路径，直接使用
+	const annIconSrc = computed(() : string => {
+		const icon = annRandom.value["icon"] as string;
+		return icon;
+	});
 
-// 根据剩余天数推算出对应的年月日
-const annRandomDate = computed((): string => {
-    const days = annRandom.value["anniversaryDate"] as number;
-    if (days <= 0) return '';
-    const target = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
-    return `${target.getFullYear()}年${target.getMonth() + 1}月${target.getDate()}日`;
-});
+	const annTitleText = computed(() : string => {
+		const title = annRandom.value["title"] as string;
+		const age = annRandom.value["age"] as number;
+		if (age > 0) return `距离 ${title} · ${age}岁生日`;
+		return `距离 ${title}`;
+	});
 
-// 后端返回的是绝对路径，直接使用
-const annIconSrc = computed((): string => {
-    const icon = annRandom.value["icon"] as string;
-    return icon;
-});
+	const isAdultBirthday = computed(() : boolean => {
+		return (annRandom.value["age"] as number) == 18;
+	});
 
-const annTitleText = computed((): string => {
-    const title = annRandom.value["title"] as string;
-    const age = annRandom.value["age"] as number;
-    if (age > 0) return `距离 ${title} · ${age}岁生日`;
-    return `距离 ${title}`;
-});
+	const annTitleColor = computed(() : string => {
+		const color = annRandom.value["color"] as string;
+		if (color.length > 0) return color;
+		return '#000000';
+	});
+	const annListLength = ref(0)
+	// 刷新随机项
+	function refreshRandom(idx : number) : void {
+		const list = annList.value;
+		if (list.length > 0) {
+			annRandom.value = list[idx];
+		}
+		console.log(annRandom.value);
+	}
 
-const isAdultBirthday = computed((): boolean => {
-    return (annRandom.value["age"] as number) == 18;
-});
+	// 获取纪念日
+	const getAnniversary = () => {
+		uni.request<ApiResponseUTS>({
 
-const annTitleColor = computed((): string => {
-    const color = annRandom.value["color"] as string;
-    if (color.length > 0) return color;
-    return '#000000';
-});
+			url: "http://192.168.164.254:3000/anniversary/anniversary/lists",
+			method: "GET",
+			header: {
+				Authorization: 'Bearer ' + getTokenStorage()
+			},
+			success: (e : RequestSuccess<ApiResponseUTS>) => {
+				// 1. 检查响应是否存在
+				if (!e.data) return;
+				// 2. 检查 HTTP 状态
+				if (e.statusCode !== 200) {
+					console.log(e.statusCode);
+					return;
+				}
+				// 3. 检查业务状态
+				if (e.data.code !== 1) {
+					console.log(e.data.message);
+					return;
+				}
+				// 4. 处理数据
+				const data = e.data.data;
+				if (data != null && data.length > 0) {
+					annList.value = data.map((item : UTSJSONObject) : UTSJSONObject => {
+						const type = item["type"] == null ? '' : item["type"] as string;
+						const birthdaySeconds = item["anniversaryDate"] as number;
+						const days = getDaysUntilNextBirthday(birthdaySeconds);
+						let age = 0;
+						if (type == "生日") {
+							age = getNextBirthdayAge(birthdaySeconds);
+						}
 
-// 刷新随机项
-function refreshRandom(): void {
-    const list = annList.value;
-    if (list.length > 0) {
-        const idx = Math.floor(Math.random() * list.length);
-        annRandom.value = list[idx];
-    }
-    console.log(annRandom.value);
-}
+						return {
+							title: item["title"] == null ? '' : item["title"] as string,
+							anniversaryDate: days,
+							type: type,
+							icon: item["icon"] == null ? '' : item["icon"] as string,
+							remark: item["remark"] == null ? '' : item["remark"] as string,
+							color: item["color"] == null ? '' : item["color"] as string,
+							age: age
+						};
+					});
+					// refreshRandom(annListLength.value); // 数据到达后随机
+				}
+			},
+			fail: (err : any) => {
+				console.error('网络错误：', err);
+			}
+		});
+	};
 
-// 获取纪念日
-const getAnniversary = () => {
-    uni.request<ApiResponseUTS>({
+	let timerId : number | null = null;
 
-        url: "http://192.168.164.254:3000/anniversary/anniversary/lists",
-        method: "GET",
-        header: {
-            Authorization: 'Bearer ' + getTokenStorage()
-        },
-        success: (e: RequestSuccess<ApiResponseUTS>) => {
-            // 1. 检查响应是否存在
-            if (!e.data) return;
-            // 2. 检查 HTTP 状态
-            if (e.statusCode !== 200) {
-                console.log( e.statusCode);
-                return;
-            }
-            // 3. 检查业务状态
-            if (e.data.code !== 1) {
-                console.log( e.data.message);
-                return;
-            }
-            // 4. 处理数据
-            const data = e.data.data;
-            if (data != null && data.length > 0) {
-                annList.value = data.map((item: UTSJSONObject): UTSJSONObject => {
-                    const type = item["type"] == null ? '' : item["type"] as string;
-                    const birthdaySeconds = item["anniversaryDate"] as number;
-                    const days = getDaysUntilNextBirthday(birthdaySeconds);
-                    let age = 0;
-                    if (type == "生日") {
-                        age = getNextBirthdayAge(birthdaySeconds);
-                    }
+	onLoad(() => {
+		getUser();
+		getAnniversary();
+		timerId = setInterval(() => {
+			if (annList.value.length > 0) {
+				if (annListLength.value == annList.value.length) {
+					annListLength.value = 0
+				}
+				refreshRandom(annListLength.value);
+				annListLength.value++
+			}
+		}, 2000);
+	});
 
-                    return {
-                        title: item["title"] == null ? '' : item["title"] as string,
-                        anniversaryDate: days,
-                        type: type,
-                        icon: item["icon"] == null ? '' : item["icon"] as string,
-                        remark: item["remark"] == null ? '' : item["remark"] as string,
-                        color: item["color"] == null ? '' : item["color"] as string,
-                        age: age
-                    };
-                });
-                refreshRandom(); // 数据到达后随机
-            }
-        },
-        fail: (err: any) => {
-            console.error('网络错误：', err);
-        }
-    });
-};
-
-let timerId: number | null = null;
-
-onLoad(() => {
-    getUser();
-    getAnniversary();
-    timerId = setInterval(() => {
-        if (annList.value.length > 0) {
-            refreshRandom();
-        }
-    }, 2000);
-});
-
-onUnmounted(() => {
-    const id = timerId;
-    if (id !== null) {
-        clearInterval(id);
-        timerId = null;
-    }
-});
+	onUnmounted(() => {
+		const id = timerId;
+		if (id !== null) {
+			clearInterval(id);
+			timerId = null;
+		}
+	});
 </script>
 <template>
 	<view class="container">
 		<!-- nav-bar -->
-		<view class="navbar  ">
+		<view class="navbar">
 			<view class="flex-space-between">
 				<view class="flex-space-between">
-					<image class="nvbar-img" src="/static/image/avatar.png" mode=""></image>
+					<image class="nvbar-img" :src="userInfo.avatar" mode=""></image>
 					<view class="pl-5 txt-nvbar">
 						<text style="font-size: 20px; font-weight: bold;color: #004fcb;">WorkBench</text>
 					</view>
@@ -283,10 +287,12 @@ onUnmounted(() => {
 				</view>
 
 				<view class="pl-20 pb-10" style=" box-sizing: border-box;">
-					<view style="display: flex; flex-direction: row; align-items: center; justify-content: space-between;">
+					<view
+						style="display: flex; flex-direction: row; align-items: center; justify-content: space-between;">
 						<view style="flex: 1; margin-right: 10px; box-sizing: border-box;">
 							<view style="">
-								<text v-if="isAdultBirthday" style="color: #d81e06; font-weight: bold;">{{annTitleText}}</text>
+								<text v-if="isAdultBirthday"
+									style="color: #d81e06; font-weight: bold;">{{annTitleText}}</text>
 								<text v-else :style="{ color: annTitleColor }">{{annTitleText}}</text>
 							</view>
 							<view style="display: flex;padding-left: -4px; flex-direction: row; align-items: center;">
@@ -298,7 +304,8 @@ onUnmounted(() => {
 								<text class="fts-12" style="color: #4f7cff;">预计 {{annRandomDate}}</text>
 							</view>
 						</view>
-						<image v-if="annIconSrc.length > 0" style="width: 56px; height: 56px;" :src="annIconSrc" mode="aspectFit"></image>
+						<image v-if="annIconSrc.length > 0" style="width: 56px; height: 56px;" :src="annIconSrc"
+							mode="aspectFit"></image>
 					</view>
 				</view>
 			</view>
@@ -353,7 +360,7 @@ onUnmounted(() => {
 	</view>
 </template>
 
-<style>
+<style scoped>
 	.container {
 		background-color: #f9f9ff;
 		height: 100%;

@@ -50,7 +50,7 @@
 					} else {
 						removeLoginStorage()
 					}
-
+					if(!e.data.data) return;
 					// // 并且还需要存储token信息
 					setTokenStorage(e.data.data.token)
 					uni.showToast({
@@ -146,26 +146,6 @@
 
 	}
 
-	.login-page {
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		align-items: center;
-	}
-
-	.welcome-box {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-	}
-
-	.welcome-text-box {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		margin-top: 20px;
-	}
 
 	.logo {
 		display: flex;
