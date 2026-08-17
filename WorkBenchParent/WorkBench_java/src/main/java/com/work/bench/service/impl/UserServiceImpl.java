@@ -1,20 +1,25 @@
 package com.work.bench.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.work.bench.config.RabbitMQConfig;
 import com.work.bench.dto.User.UserLoginDTO;
 import com.work.bench.enums.GenderType;
 import com.work.bench.enums.RedisCacheKey;
 import com.work.bench.exception.BusinessException;
 import com.work.bench.mapper.UserMapper;
 import com.work.bench.pojo.User;
+import com.work.bench.rabbitmq.message.UserLoginMessage;
 import com.work.bench.utils.EnumUtils;
 import com.work.bench.utils.JwtUtil;
 import com.work.bench.security.LoginUser;
 import com.work.bench.service.UserService;
+import com.work.bench.utils.RequestUtils;
 import com.work.bench.vo.user.LoginVO;
 import com.work.bench.vo.user.UserInfoVO;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
@@ -38,6 +43,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
 
+    private final RabbitTemplate rabbitTemplate;
 
     /**
      * 用户登录方法
@@ -46,8 +52,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 返回 LoginVO 信息
      */
     @Override
-    public LoginVO userLogin(UserLoginDTO userLoginDTO) {
-
+    public LoginVO userLogin(UserLoginDTO userLoginDTO, HttpServletRequest request) {
 
         log.info("开始认证");
         String account = userLoginDTO.getAccount();
@@ -105,6 +110,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 TimeUnit.DAYS
         );
 
+        /**
+         * 构建消息体
+         */
+        UserLoginMessage userLoginMessage = UserLoginMessage.builder()
+                 .userId(userId)
+                .account(account)
+                .loginIp(RequestUtils.getClientIp(request))
+                .userAgent(request.getHeader("user-agent"))
+                .loginTime(System.currentTimeMillis())
+                .build();
+        // 发送消息队列给消费者
+        rabbitTemplate.convertAndSend(RabbitMQConfig.USER_EXCHANGE, RabbitMQConfig.USER_LOGIN_ROUTING_KEY,userLoginMessage);
 
         // 封装成VO返回前端
         return new LoginVO(token);

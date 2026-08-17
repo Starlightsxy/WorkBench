@@ -5,6 +5,7 @@ import com.work.bench.dto.User.UserLoginDTO;
 import com.work.bench.pojo.User;
 import com.work.bench.vo.user.LoginVO;
 import com.work.bench.vo.user.UserInfoVO;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * 用户服务
@@ -19,7 +20,7 @@ public interface UserService extends IService<User> {
      * @param userLoginDTO 统一账号接收登录信息
      * @return 返回 LoginVO 信息
      */
-    LoginVO userLogin(UserLoginDTO userLoginDTO);
+    LoginVO userLogin(UserLoginDTO userLoginDTO, HttpServletRequest request);
 
     UserInfoVO getUserInfo(Integer userId);
 }

@@ -7,6 +7,7 @@ import com.work.bench.utils.Result;
 import com.work.bench.utils.SecurityUtils;
 import com.work.bench.vo.user.LoginVO;
 import com.work.bench.vo.user.UserInfoVO;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -33,8 +34,8 @@ public class UserController {
      */
     @AroundLog
     @PostMapping("/login")
-    public Result<LoginVO> login(@RequestBody UserLoginDTO userLoginDTO) {
-        return Result.success("登录成功", userService.userLogin(userLoginDTO));
+    public Result<LoginVO> login(@RequestBody UserLoginDTO userLoginDTO, HttpServletRequest request) {
+        return Result.success("登录成功", userService.userLogin(userLoginDTO,request));
     }
 
     /**
