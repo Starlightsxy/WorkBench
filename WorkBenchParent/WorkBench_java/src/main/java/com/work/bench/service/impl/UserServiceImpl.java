@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.work.bench.config.RabbitMQConfig;
 import com.work.bench.dto.User.UserLoginDTO;
 import com.work.bench.enums.GenderType;
+import com.work.bench.enums.LoginLogStatus;
 import com.work.bench.enums.RedisCacheKey;
 import com.work.bench.exception.BusinessException;
 import com.work.bench.mapper.UserMapper;
@@ -112,13 +113,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         /**
          * 构建消息体
+         * // TODO 这里构建消息体这里的登陆状态固定了，还有失败原因还没做处理
          */
         UserLoginMessage userLoginMessage = UserLoginMessage.builder()
                  .userId(userId)
                 .account(account)
                 .loginIp(RequestUtils.getClientIp(request))
+                .loginStatus(LoginLogStatus.SUCCESS.getCode())
+                .failReason("")
                 .userAgent(request.getHeader("user-agent"))
-                .loginTime(System.currentTimeMillis())
+                .loginTime(System.currentTimeMillis()/1000)
                 .build();
         // 发送消息队列给消费者
         rabbitTemplate.convertAndSend(RabbitMQConfig.USER_EXCHANGE, RabbitMQConfig.USER_LOGIN_ROUTING_KEY,userLoginMessage);
