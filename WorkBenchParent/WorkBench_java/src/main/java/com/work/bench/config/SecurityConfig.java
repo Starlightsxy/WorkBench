@@ -93,7 +93,7 @@ public class SecurityConfig {
 
                 // 配置拦截
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/user/login").permitAll() // 允许访问login，
+                        .requestMatchers("/user/login","/ws").permitAll() // 允许访问login，
                         .anyRequest().authenticated()// 其他请求都必须走认证
                 )
 

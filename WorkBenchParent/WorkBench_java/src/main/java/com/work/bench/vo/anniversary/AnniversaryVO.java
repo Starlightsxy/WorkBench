@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 /**
  * 纪念日返回给前端的纪念日信息
  * @author 洁心未眠
@@ -13,7 +15,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AnniversaryVO {
+public class AnniversaryVO implements Serializable {
     // 标题
     private String title;
     // 纪念日期

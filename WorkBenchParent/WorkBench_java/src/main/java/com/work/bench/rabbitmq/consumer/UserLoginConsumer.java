@@ -4,6 +4,7 @@ import com.work.bench.config.RabbitMQConfig;
 import com.work.bench.pojo.logo.LoginLog;
 import com.work.bench.rabbitmq.message.UserLoginMessage;
 import com.work.bench.service.logservice.LoginLogService;
+import com.work.bench.websocket.service.WebSocketService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -21,19 +22,23 @@ import org.springframework.stereotype.Component;
 public class UserLoginConsumer {
 
     private final LoginLogService loginLogService;
+    private final WebSocketService webSocketService;
 
     /**
      * 监听 login 队列的消息
      * 记录日志
+     *
      * @param message
      */
-    @RabbitListener(queues = RabbitMQConfig.USER_LOGIN_QUEUE)
-    public void receive(UserLoginMessage message) {
 
-        log.info("收到用户登录消息，准备记录日志：{}", message);
+    @RabbitListener(queues = RabbitMQConfig.USER_LOGIN_QUEUE)
+    public void receiveLogin(UserLoginMessage message) {
+
         // 这里处理消息
         LoginLog loginLog = new LoginLog();
         BeanUtils.copyProperties(message, loginLog);
         loginLogService.save(loginLog);
     }
+
+
 }

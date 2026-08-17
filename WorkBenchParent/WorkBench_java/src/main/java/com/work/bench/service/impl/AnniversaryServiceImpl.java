@@ -1,13 +1,16 @@
 package com.work.bench.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.work.bench.config.RabbitMQConfig;
 import com.work.bench.enums.AnniversaryType;
 import com.work.bench.mapper.AnniversaryMapper;
 import com.work.bench.pojo.Anniversary;
 import com.work.bench.service.AnniversaryService;
+import com.work.bench.utils.BaseContext;
 import com.work.bench.utils.EnumUtils;
 import com.work.bench.vo.anniversary.AnniversaryVO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;

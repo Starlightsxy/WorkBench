@@ -37,7 +37,7 @@
 	// 获取用户信息
 	const getUser = () => {
 		uni.request<ApiResponse<UserInfoVO>>({
-			url: "http://192.168.164.254:3000/user/getUserInfo",
+			url: "http://192.168.146.254:3000/user/getUserInfo",
 			method: "GET",
 			header: {
 				Authorization: 'Bearer ' + getTokenStorage()
@@ -141,7 +141,7 @@
 	const getAnniversary = () => {
 		uni.request<ApiResponseUTS>({
 
-			url: "http://192.168.164.254:3000/anniversary/anniversary/lists",
+			url: "http://192.168.146.254:3000/anniversary/anniversary/lists",
 			method: "GET",
 			header: {
 				Authorization: 'Bearer ' + getTokenStorage()
@@ -192,9 +192,13 @@
 
 	let timerId : number | null = null;
 
+
+
 	onLoad(() => {
+
 		getUser();
 		getAnniversary();
+
 		timerId = setInterval(() => {
 			if (annList.value.length > 0) {
 				if (annListLength.value == annList.value.length) {

@@ -1,0 +1,65 @@
+
+
+// 建立 WebSocket
+export function connectionWebSocket(token :string) {
+
+
+	if (!token) {
+		console.log("没有token，不建立连接")
+		return
+	}
+
+	console.log("开始建立 WebSocket")
+
+
+	const socket = uni.connectSocket({
+		url: `ws://192.168.146.254:3000/ws?token=${token}`,
+
+		success() {
+			console.log("WebSocket连接请求发送成功")
+		},
+
+		fail(err) {
+			console.error("WebSocket连接失败", err)
+		}
+	})
+
+
+	// 连接成功
+	socket.onOpen(() => {
+
+		console.log("WebSocket连接成功")
+
+	})
+
+
+	// 收到服务器消息
+	socket.onMessage((res) => {
+
+		console.log("收到服务器消息")
+		uni.showToast({
+			title:res.data as string
+		})
+
+	})
+
+
+	// 连接关闭
+	socket.onClose((res) => {
+
+		console.log("WebSocket连接关闭")
+
+		console.log(res)
+
+	})
+
+
+	// 连接错误
+	socket.onError((err) => {
+
+		console.error("WebSocket错误")
+
+		console.error(err)
+
+	})
+}

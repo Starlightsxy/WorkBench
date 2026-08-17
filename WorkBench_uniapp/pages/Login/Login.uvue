@@ -1,5 +1,6 @@
 <script setup lang="uts">
 	import { getLoginStorage, removeLoginStorage, setLoginStorage, setTokenStorage, setUserStorage } from '../../storage';
+import { connectionWebSocket, listenWebSocket } from '../../storage/user/webSocket';
 	import { ApiResponse } from '../../type';
 	import { LoginDTO, LoginUser, UserInfoVO } from '../../type/module/user';
 
@@ -29,7 +30,7 @@
 		loginForm.password = formData['password'] as string
 		uni.request<ApiResponse<LoginUser>>({
 
-			url: "http://192.168.164.254:3000/user/login",
+			url: "http://192.168.146.254:3000/user/login",
 			data: formData,
 			method: "POST",
 			success: (e : RequestSuccess<ApiResponse<LoginUser>>) => {
@@ -57,6 +58,8 @@
 						title: e.data.message,
 						icon: 'success'
 					})
+					// 建立连接
+					connectionWebSocket(e.data.data.token)
 					// 跳转到首页
 					uni.switchTab({
 						url: "/pages/index/index"
