@@ -1,30 +1,174 @@
-// // utils/request.ts
-// import { http } from 'uview-plus'
+import { ApiResponse, LoginUser } from "../type"
+import { getAccessTokenStorage, getRefreshTokenStorage, setAccessTokenStorage, setRefreshTokenStorage } from "../storage"
 
-// /* 1. 全局配置 */
-// http.setConfig((config) => {
-// 	config.baseURL = 'https://api.example.com'  // api地址
-// 	config.timeout = 8000  // 单位毫秒，对应8秒
-// 	config.loadingText = '加载中...'
-// 	config.loading = true          // 开启 loading 动画
-// 	return config
-// })
+// 请求基础地址
+const BASE_URL = "http://192.168.146.254:3000"
+// 业务成功码
+const SUCCESS_CODE = 1
+// 默认超时时间（毫秒）
+const DEFAULT_TIMEOUT = 10000
 
-// /* 2. 请求拦截 */
-// http.interceptors.request.use((config) => {
-// 	const token = uni.getStorageSync('token')
-// 	if (token) config.header.Authorization = `Bearer ${token}`
-// 	return config
-// })
+export type RequestOptions = {
+	url: string
+	method?: string
+	data?: any
+	header?: UTSJSONObject
+	timeout?: number
+	loading?: boolean
+	loadingText?: string
+}
 
-// /* 3. 响应拦截 */
-// http.interceptors.response.use(
-// 	(response) => response.data,
-// 	(err) => {
-// 		// 🔥 强制断言，让 UTS 闭嘴
-// 		(uni as any).$u.toast(err.message || '网络错误')
-// 		return Promise.reject(err)
-// 	}
-// )
+// 统一的请求错误对象
+export class RequestError {
+	code: number
+	message: string
+	statusCode: number
 
-// export default http
+	constructor(code: number, message: string, statusCode: number) {
+		this.code = code
+		this.message = message
+		this.statusCode = statusCode
+	}
+}
+
+/**
+ * 封装 uni.request
+ * 业务成功时 resolve 返回体中的 data，失败时 reject RequestError
+ */
+export function request<T>(options: RequestOptions): Promise<T | null> {
+	// 自动携带 token
+	const token = getAccessTokenStorage()
+	const header: UTSJSONObject = options.header ?? {}
+	if (token != null && token != '') {
+		header['Authorization'] = 'Bearer ' + token
+	}
+
+	const loading = options.loading == true
+	if (loading) {
+		uni.showLoading({
+			title: options.loadingText ?? '加载中...'
+		})
+	}
+
+	const url = options.url.startsWith('http') ? options.url : BASE_URL + options.url
+
+	return new Promise<T | null>((resolve, reject) => {
+		uni.request<ApiResponse<T>>({
+			url: url,
+			data: options.data ?? '',
+			header: header,
+			method: (options.method ?? 'GET').toUpperCase(),
+			timeout: options.timeout ?? DEFAULT_TIMEOUT,
+			success: (res: RequestSuccess<ApiResponse<T>>) => {
+
+				if (res.data == null) {
+					reject(new RequestError(-1, '服务器返回数据为空', res.statusCode))
+					return
+				}
+
+				if (res.statusCode === 401) {
+					// 刷新token
+					post<UTSJSONObject>('/user/refresh',{refreshToken:getRefreshTokenStorage()},{})
+					.then((res:UTSJSONObject | null) => {
+						if (res == null) return
+						const user : LoginUser = {
+							accessToken: res['accessToken'] as string,
+							refreshToken: res['refreshToken'] as string
+						}
+						setAccessTokenStorage(user.accessToken)
+						setRefreshTokenStorage(user.refreshToken)
+
+
+					}).catch((err) => {
+						console.log(err)
+					})
+					return
+				}
+
+
+				if (res.data.code === SUCCESS_CODE) {
+					resolve(res.data.data)
+					return
+				}
+				reject(new RequestError(res.data.code, res.data.message, res.statusCode))
+			},
+			fail: (err: RequestFail) => {
+				console.log('fail',err)
+				if(err ==null) return;
+				let message = err.data as string
+				// switch (err.errCode) {
+				// 	case 5:
+				// 		message = '接口超时'
+				// 		break
+				// 	case 1000:
+				// 		message = '服务端系统错误'
+				// 		break
+				// 	case 100001:
+				// 		message = 'json数据解析错误'
+				// 		break
+				// 	case 100002:
+				// 		message = '错误信息json解析失败'
+				// 		break
+				// 	case 100003:
+				// 		message = 'json解析类型转换失败'
+				// 		break
+				// 	case 600003:
+				// 		message = '网络中断'
+				// 		break
+				// 	case 600008:
+				// 		message = 'data参数类型不合法'
+				// 		break
+				// 	case 600009:
+				// 		message = 'URL格式不合法'
+				// 		break
+				// 	case 602001:
+				// 		message = 'request系统错误'
+				// 		break
+				// 	default:
+				// 		message = err.errMsg
+				// 		break
+				// }
+				uni.showToast({
+					title: message,
+					icon: 'none'
+				})
+				reject(new RequestError(err.errCode, message, 0))
+			},
+			complete: () => {
+				if (loading) {
+					uni.hideLoading()
+				}
+			}
+		})
+	})
+}
+
+/**
+ * 兼容原有调用方式的 http 封装
+ */
+export function http<T>(url: string, data?: any, header?: UTSJSONObject, method?: string): Promise<T | null> {
+	return request<T>({
+		url: url,
+		data: data,
+		header: header,
+		method: method
+	})
+}
+
+export function get<T>(url: string, data?: any, header?: UTSJSONObject): Promise<T | null> {
+	return request<T>({
+		url: url,
+		method: 'GET',
+		data: data,
+		header: header
+	})
+}
+
+export function post<T>(url: string, data?: any, header?: UTSJSONObject): Promise<T | null> {
+	return request<T>({
+		url: url,
+		method: 'POST',
+		data: data,
+		header: header
+	})
+}

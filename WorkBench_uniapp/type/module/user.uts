@@ -20,5 +20,11 @@ export type UserInfoVO = {
 
 // 登录成功后的数据展示
 export type LoginUser = {
-	token : string;
+	accessToken : string;
+	refreshToken: string;
+}
+
+// 刷新token的dto数据体
+export type tokenDto = {
+	refreshToken:string;
 }

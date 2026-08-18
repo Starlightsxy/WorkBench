@@ -11,6 +11,10 @@ const KEY = "user-storage"
 export const setUserStorage = (data : UserInfoVO) => {
 	uni.setStorageSync(KEY, data)
 }
+// 存储用户信息
+// export const getUserStorage = () : UserInfoVO => {
+// 	return uni.getStorageSync(KEY) as UserInfoVO
+// }
 
 export const getUserStorage = () : UTSJSONObject | null => {
 	const data = uni.getStorageSync(KEY)

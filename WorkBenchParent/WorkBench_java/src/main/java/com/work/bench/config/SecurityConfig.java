@@ -93,7 +93,7 @@ public class SecurityConfig {
 
                 // 配置拦截
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/user/login","/ws").permitAll() // 允许访问login，
+                        .requestMatchers("/user/login","/ws","/user/refresh").permitAll() // 允许访问login，
                         .anyRequest().authenticated()// 其他请求都必须走认证
                 )
 
@@ -109,14 +109,14 @@ public class SecurityConfig {
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             response.setContentType("application/json;charset=UTF-8");
-                            response.getWriter().write("未登录或Token无效");
+                            response.getWriter().write("{\"code\":401,\"message\":\"未登录或Token无效\",\"data\":null}");
                         })
 
                         // 已经登录，但是没有权限 -> 403
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
                             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                             response.setContentType("application/json;charset=UTF-8");
-                            response.getWriter().write("权限不足");
+                            response.getWriter().write("{\"code\":403,\"message\":\"权限不足\",\"data\":null}");
                         })
                 )
                 // 添加过滤

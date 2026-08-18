@@ -1,8 +1,9 @@
 <script setup lang="uts">
-	import { getLoginStorage, removeLoginStorage, setLoginStorage, setTokenStorage, setUserStorage } from '../../storage';
-import { connectionWebSocket, listenWebSocket } from '../../storage/user/webSocket';
+	import { getLoginStorage, removeLoginStorage, setAccessTokenStorage, setLoginStorage, setRefreshTokenStorage, setUserStorage } from '../../storage';
+	import { connectionWebSocket } from '../../storage/user/webSocket';
 	import { ApiResponse } from '../../type';
 	import { LoginDTO, LoginUser, UserInfoVO } from '../../type/module/user';
+	import { RequestError, http, post } from '../../utils/request';
 
 
 	const loginForm = reactive<LoginDTO>({
@@ -28,52 +29,97 @@ import { connectionWebSocket, listenWebSocket } from '../../storage/user/webSock
 		const formData = e.detail.value
 		loginForm.account = formData['account'] as string
 		loginForm.password = formData['password'] as string
-		uni.request<ApiResponse<LoginUser>>({
+		/*
+		post<UTSJSONObject>("/user/login", formData, {}).then((res : UTSJSONObject | null) => {
+			if (res == null) return
+			const user : LoginUser = {
+				accessToken: res['accessToken'] as string,
+				refreshToken: res['refreshToken'] as string
+			}
+			setAccessTokenStorage(user.accessToken)
+			setRefreshTokenStorage(user.refreshToken)
+			connectionWebSocket(user.accessToken)
+			// 跳转到首页
+			uni.switchTab({
+				url: "/pages/index/index"
+			})
+		}).catch((err) => {
+			const error = err as RequestError
+			if (error.code === 0) {
+				uni.showToast({
+					title: error.message,
+					icon: 'error'
+				})
+			}
 
+		})
+		*/
+
+
+
+		uni.request<ApiResponse<LoginUser>>({
 			url: "http://192.168.146.254:3000/user/login",
 			data: formData,
 			method: "POST",
+			timeout: 5000,
 			success: (e : RequestSuccess<ApiResponse<LoginUser>>) => {
-				if (!e.data) return;
-				if (e.statusCode !== 200) {
+
+				if (e.data == null) return
+				const res = e.data
+				if (res.code === 0) {
 					uni.showToast({
-						title: e.data.message,
+						title: res.message,
 						icon: 'error'
 					})
 					return
 				}
-
-				// 成功回调
-				if (e.data.code === 1) {
-					// 根据是否选中记住选项将信息存储在本地
-					if (loginForm.remember) {
-						setLoginStorage(loginForm)
-					} else {
-						removeLoginStorage()
-					}
-					if(!e.data.data) return;
-					// // 并且还需要存储token信息
-					setTokenStorage(e.data.data.token)
-					uni.showToast({
-						title: e.data.message,
-						icon: 'success'
-					})
-					// 建立连接
-					connectionWebSocket(e.data.data.token)
-					// 跳转到首页
-					uni.switchTab({
-						url: "/pages/index/index"
-					})
-					return
+				if (loginForm.remember) {
+					setLoginStorage(loginForm)
+				} else {
+					removeLoginStorage()
 				}
-				// 失败回调
+				setAccessTokenStorage(res.data?.accessToken as string)
+				setRefreshTokenStorage(res.data?.refreshToken as string)
+				connectionWebSocket(res.data?.accessToken as string)
 				uni.showToast({
-					title: e.data.message,
-					icon: 'error'
+					title: res.message,
+					icon: 'success'
 				})
+				uni.switchTab({
+					url: "/pages/index/index"
+				})
+				// 成功回调
+				// if (e.data.code === 1) {
+				// 	// 根据是否选中记住选项将信息存储在本地
+				// 	if (loginForm.remember) {
+				// 		setLoginStorage(loginForm)
+				// 	} else {
+				// 		removeLoginStorage()
+				// 	}
+				// 	if(!e.data.data) return;
+				// 	// 存储accessToken 和refreshToken，由于这里是app没有像浏览器那样的httpOnlyCookies
+				// 	setAccessTokenStorage(e.data.data.accessToken)
+				//
+				// 	uni.showToast({
+				// 		title: e.data.message,
+				// 		icon: 'success'
+				// 	})
+				// 	// 建立连接
+				// 	connectionWebSocket(e.data.data.accessToken)
+				// 	// 跳转到首页
+				// 	uni.switchTab({
+				// 		url: "/pages/index/index"
+				// 	})
+				// 	return
+				// }
+				// // 失败回调
+				// uni.showToast({
+				// 	title: e.data.message,
+				// 	icon: 'error'
+				// })
 
-			},fail(e){
-				console.log(e)
+			}, fail(e : RequestFail) {
+				console.log('e', e)
 			}
 		})
 	}

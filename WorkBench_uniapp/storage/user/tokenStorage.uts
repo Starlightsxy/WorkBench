@@ -1,19 +1,33 @@
 // token 的状态管理
 // key
-const KEY = "token-storage"
-// 存储token
-export const setTokenStorage = (data : string) => {
-	uni.setStorageSync(KEY, data)
+const acc = "accessToken-storage"
+const ref = "refreshToken-storage"
+// 存储accToken
+export const setAccessTokenStorage = (data : string) => {
+	uni.setStorageSync(acc, data)
 }
 
 
-// 获取token
-export const getTokenStorage = ():string |null=> {
-	return uni.getStorageSync(KEY) as string| null
+// 获取accToken
+export const getAccessTokenStorage = () : string  => {
+	return uni.getStorageSync(acc) as string
+
+}
+
+// 存储refToken
+export const setRefreshTokenStorage = (data : string) => {
+	uni.setStorageSync(ref, data)
+}
+
+
+// 获取refToken
+export const getRefreshTokenStorage = () : string  => {
+	return uni.getStorageSync(ref) as string
 
 }
 
 // 删除token
 export const removeTokenStorage = () => {
-	uni.removeStorageSync(KEY)
+	uni.removeStorageSync(acc)
+	uni.removeStorageSync(ref)
 }

@@ -1,6 +1,7 @@
 <script setup lang="uts">
-	import { getTokenStorage, getUserStorage, setUserStorage } from '../../storage';
-	import { ApiResponse, ApiResponseUTS, UserInfoVO } from '../../type';
+	import { getAccessTokenStorage, getRefreshTokenStorage, getUserStorage, setAccessTokenStorage, setRefreshTokenStorage, setUserStorage } from '../../storage';
+	import { ApiResponse, ApiResponseUTS, LoginUser, UserInfoVO } from '../../type';
+	import { RequestError, get } from '../../utils/request';
 
 	// 用户信息
 	const userInfo = ref<UserInfoVO>({
@@ -28,7 +29,40 @@
 		if (nowHourse >= 18 && nowHourse < 24) return "晚上好：";
 		return "";
 	});
+	const refresh = () => {
+		uni.request<ApiResponse<LoginUser>>({
+			url: "http://192.168.146.254:3000/user/refresh",
+			method: 'POST',
+			data: {
+				refreshToken: getRefreshTokenStorage() ? getRefreshTokenStorage() : null
+			},
+			timeout: 5000,
+			success: (e : RequestSuccess<ApiResponse<LoginUser>>) => {
+				if (e.data == null) return
+				const res = e.data
+				// 服务端错误
+				if (res.code === 0) {
+					uni.showToast({
+						title: res.message,
+						icon: 'error'
+					})
+					return
+				}
 
+				if (res.data == null) return
+				// 换新token
+				setAccessTokenStorage(res.data?.accessToken as string)
+				setRefreshTokenStorage(res.data?.refreshToken as string)
+
+			}, fail(e) {
+				if (e == null) return
+				uni.showToast({
+					title: e.data as string,
+					icon: 'error'
+				})
+			}
+		})
+	}
 	// 获取当前日期时间年月日周几
 	const nowDay = computed(() => {
 		return `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 周${dayStr[now.getDay() - 1]}`;
@@ -36,22 +70,42 @@
 
 	// 获取用户信息
 	const getUser = () => {
+
 		uni.request<ApiResponse<UserInfoVO>>({
 			url: "http://192.168.146.254:3000/user/getUserInfo",
 			method: "GET",
 			header: {
-				Authorization: 'Bearer ' + getTokenStorage()
+				Authorization: 'Bearer ' + getAccessTokenStorage()
 			},
+			timeout: 5000,
 			success: (e : RequestSuccess<ApiResponse<UserInfoVO>>) => {
-				if (!e.data) return;
-				if (e.statusCode !== 200) {
-					console.log('失败');
-					return;
+
+				if (e.data == null) return
+				const res = e.data
+				// 服务端错误
+				if (res.code === 0) {
+					uni.showToast({
+						title: res.message,
+						icon: 'error'
+					})
+					return
 				}
-				if (e.data.code == 1 && e.data.data) {
-					setUserStorage(e.data.data);
-					userInfo.value = e.data.data;
+				// 401，accessToken过期，需要刷新token
+				if (res.code === 401) {
+					refresh()
 				}
+
+				if (res.data == null) return
+				console.log(res.data)
+				setUserStorage(res.data);
+				userInfo.value = res.data
+			}, fail(e) {
+
+				if (e == null) return
+				uni.showToast({
+					title: e.data as string,
+					icon: 'error'
+				})
 			}
 		});
 	};
@@ -134,7 +188,6 @@
 		if (list.length > 0) {
 			annRandom.value = list[idx];
 		}
-		console.log(annRandom.value);
 	}
 
 	// 获取纪念日
@@ -144,7 +197,7 @@
 			url: "http://192.168.146.254:3000/anniversary/anniversary/lists",
 			method: "GET",
 			header: {
-				Authorization: 'Bearer ' + getTokenStorage()
+				Authorization: 'Bearer ' + getAccessTokenStorage()
 			},
 			success: (e : RequestSuccess<ApiResponseUTS>) => {
 				// 1. 检查响应是否存在
@@ -184,8 +237,8 @@
 					// refreshRandom(annListLength.value); // 数据到达后随机
 				}
 			},
-			fail: (err : any) => {
-				console.error('网络错误：', err);
+			fail: (err) => {
+				console.log(err.data)
 			}
 		});
 	};
@@ -324,7 +377,7 @@
 						<text class='fts-20 pl-10'>最近账单</text>
 					</view>
 					<view style="">
-						<text class="fts-14" style="color: blue; ">查看全部</text>
+						<text class="fts-14" style="color: blue; " @click="getUser()">查看全部</text>
 					</view>
 				</view>
 				<!-- 账单列表 只统计最近10个 -->
