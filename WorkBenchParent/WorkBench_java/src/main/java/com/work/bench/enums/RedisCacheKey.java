@@ -11,7 +11,10 @@ import lombok.Getter;
  */
 @Getter
 public enum RedisCacheKey {
-    REDIS_CACHE_USER_KEY("login:user:");
+    // 缓存庸碌登陆后的信息key
+    REDIS_CACHE_USER_KEY("login:user:"),
+    // refreshToken Key
+    REFRESH_TOKEN("login:refresh:");
 
     private final String value;
 

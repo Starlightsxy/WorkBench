@@ -2,10 +2,12 @@ package com.work.bench.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.work.bench.config.RabbitMQConfig;
+import com.work.bench.dto.User.RefreshTokenDTO;
 import com.work.bench.dto.User.UserLoginDTO;
 import com.work.bench.enums.GenderType;
 import com.work.bench.enums.LoginLogStatus;
 import com.work.bench.enums.RedisCacheKey;
+import com.work.bench.enums.TokenType;
 import com.work.bench.exception.BusinessException;
 import com.work.bench.mapper.UserMapper;
 import com.work.bench.pojo.User;
@@ -15,8 +17,9 @@ import com.work.bench.utils.JwtUtil;
 import com.work.bench.security.LoginUser;
 import com.work.bench.service.UserService;
 import com.work.bench.utils.RequestUtils;
-import com.work.bench.vo.user.LoginVO;
+import com.work.bench.vo.user.LoginTokenVO;
 import com.work.bench.vo.user.UserInfoVO;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +29,7 @@ import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -50,10 +54,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * 用户登录方法
      *
      * @param userLoginDTO 统一账号接收登录信息
-     * @return 返回 LoginVO 信息
+     * @return 返回 LoginTokenVO 信息
      */
     @Override
-    public LoginVO userLogin(UserLoginDTO userLoginDTO, HttpServletRequest request) {
+    public LoginTokenVO userLogin(UserLoginDTO userLoginDTO, HttpServletRequest request) {
 
         log.info("开始认证");
         String account = userLoginDTO.getAccount();
@@ -97,8 +101,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         LoginUser loginUser = (LoginUser) authentication.getPrincipal();
         Integer userId = loginUser.getUser().getId();
 
-        // 生成 token
-        String token = jwtUtil.createToken(userId);
+        // 生成 两个token
+        String accessToken = jwtUtil.createToken(userId, TokenType.ACCESS);
+        String refreshToken = jwtUtil.createToken(userId, TokenType.REFRESH);
 
         // 查询用户信息
         UserInfoVO userInfoVO = getUserInfo(userId);
@@ -107,9 +112,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         jsonRedisTemplate.opsForValue().set(
                 RedisCacheKey.REDIS_CACHE_USER_KEY.getValue() + userId,
                 userInfoVO,
-                JwtUtil.getExpireTime(),
+                JwtUtil.getRefreshExpireTime(),
                 TimeUnit.MILLISECONDS
+        );
 
+        // 存储 refreshToken 在redis中
+        String key = RedisCacheKey.REFRESH_TOKEN.getValue() + userId;
+        jsonRedisTemplate.opsForValue().set(
+                key,
+                refreshToken,
+                JwtUtil.getRefreshExpireTime(),
+                TimeUnit.MILLISECONDS
         );
 
         /**
@@ -129,7 +142,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         rabbitTemplate.convertAndSend(RabbitMQConfig.USER_EXCHANGE, RabbitMQConfig.USER_LOGIN_ROUTING_KEY, userLoginMessage);
 
         // 封装成VO返回前端
-        return new LoginVO(token);
+        return new LoginTokenVO(accessToken, refreshToken);
     }
 
     /**
@@ -152,5 +165,45 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 .theme(user.getTheme())
                 .gender(EnumUtils.getDescByCode(GenderType.class, user.getGender()))
                 .build();
+    }
+
+    /**
+     *
+     * @param refreshTokenDTO 刷新token
+     * @return LoginTokenVO
+     */
+    @Override
+    public LoginTokenVO refreshToken(RefreshTokenDTO refreshTokenDTO) {
+        String refreshToken = refreshTokenDTO.getRefreshToken();
+        // 解析 refreshToken
+        Claims claims = jwtUtil.validateToken(refreshToken);
+        if (claims == null) {
+            throw new BusinessException("无效的Refresh Token");
+        }
+        // 判断 token 类型
+        String type = claims.get("type", String.class);
+        // 如果不是refresh就报错无效
+        if (!"refresh".equals(type)) {
+            throw new BusinessException("无效的Refresh Token");
+        }
+        // 获取用户的id
+        Integer userId = Integer.parseInt(claims.getSubject());
+
+        // 在redis中找到对应的refreshToken做比较
+        String key = RedisCacheKey.REFRESH_TOKEN.getValue() + userId;
+        String redisRefreshToken = (String) jsonRedisTemplate.opsForValue().get(key);
+
+        if (redisRefreshToken == null) {
+            throw new BusinessException("RefreshToken 过期或禁用，需要重新登录");
+        }
+        if (!redisRefreshToken.equals(refreshToken)) {
+            throw new BusinessException(
+                    "RefreshToken 过期或禁用，需要重新登录"
+            );
+        }
+        // 重新生成 Access Token
+        String accessToken = jwtUtil.createToken(userId, TokenType.ACCESS);
+
+        return new LoginTokenVO(accessToken, refreshToken);
     }
 }

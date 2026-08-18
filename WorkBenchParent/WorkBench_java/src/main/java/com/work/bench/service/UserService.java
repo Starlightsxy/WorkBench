@@ -1,9 +1,10 @@
 package com.work.bench.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.work.bench.dto.User.RefreshTokenDTO;
 import com.work.bench.dto.User.UserLoginDTO;
 import com.work.bench.pojo.User;
-import com.work.bench.vo.user.LoginVO;
+import com.work.bench.vo.user.LoginTokenVO;
 import com.work.bench.vo.user.UserInfoVO;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -18,9 +19,22 @@ public interface UserService extends IService<User> {
     /**
      * 用户登录方法
      * @param userLoginDTO 统一账号接收登录信息
-     * @return 返回 LoginVO 信息
+     * @return 返回 LoginTokenVO 信息
      */
-    LoginVO userLogin(UserLoginDTO userLoginDTO, HttpServletRequest request);
+    LoginTokenVO userLogin(UserLoginDTO userLoginDTO, HttpServletRequest request);
 
+    /**
+     *
+     * @param userId 根据userId获取用户信息
+     * @return UserInfoVO
+     */
     UserInfoVO getUserInfo(Integer userId);
+
+    /**
+     *
+     * @param refreshTokenDTO 刷新token
+     * @return LoginTokenVO
+     */
+    LoginTokenVO refreshToken(RefreshTokenDTO refreshTokenDTO);
+
 }

@@ -11,6 +11,9 @@ import lombok.Data;
  */
 @Data
 @AllArgsConstructor
-public class LoginVO {
-    private String token;
+public class LoginTokenVO {
+    // 用于业务的accessToken
+    private String accessToken;
+    // 用于accessToken过期时，拿到refreshToken去刷新accessToken
+    private String refreshToken;
 }

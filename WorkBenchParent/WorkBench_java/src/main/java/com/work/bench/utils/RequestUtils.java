@@ -8,7 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
  * @Package com.work.bench.utils
  * @date 2026/8/17 16:35
  */
-public class RequestUtils {
+public final class RequestUtils {
     /**
      * 获取客户端IP
      * @param request

@@ -1,11 +1,12 @@
 package com.work.bench.controller;
 
 import com.work.bench.annotation.AroundLog;
+import com.work.bench.dto.User.RefreshTokenDTO;
 import com.work.bench.dto.User.UserLoginDTO;
 import com.work.bench.service.UserService;
 import com.work.bench.utils.Result;
 import com.work.bench.utils.SecurityUtils;
-import com.work.bench.vo.user.LoginVO;
+import com.work.bench.vo.user.LoginTokenVO;
 import com.work.bench.vo.user.UserInfoVO;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +35,7 @@ public class UserController {
      */
     @AroundLog
     @PostMapping("/login")
-    public Result<LoginVO> login(@RequestBody UserLoginDTO userLoginDTO, HttpServletRequest request) {
+    public Result<LoginTokenVO> login(@RequestBody UserLoginDTO userLoginDTO, HttpServletRequest request) {
         return Result.success("登录成功", userService.userLogin(userLoginDTO,request));
     }
 
@@ -42,8 +43,20 @@ public class UserController {
      * 测试获取用户id
      * @return
      */
+    @AroundLog
     @GetMapping("/getUserInfo")
     public Result<UserInfoVO> getUser(){
         return Result.success(SecurityUtils.getUserInfo());
+    }
+
+    /**
+     *
+     * @param refreshTokenDTO
+     * @return
+     */
+    @AroundLog
+    @PostMapping("/refresh")
+    public Result<LoginTokenVO> refresh(@RequestBody RefreshTokenDTO refreshTokenDTO){
+        return Result.success(userService.refreshToken(refreshTokenDTO));
     }
 }
