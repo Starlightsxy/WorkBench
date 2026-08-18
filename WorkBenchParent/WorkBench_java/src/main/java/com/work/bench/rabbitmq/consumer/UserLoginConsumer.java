@@ -22,7 +22,6 @@ import org.springframework.stereotype.Component;
 public class UserLoginConsumer {
 
     private final LoginLogService loginLogService;
-    private final WebSocketService webSocketService;
 
     /**
      * 监听 login 队列的消息
@@ -33,7 +32,6 @@ public class UserLoginConsumer {
 
     @RabbitListener(queues = RabbitMQConfig.USER_LOGIN_QUEUE)
     public void receiveLogin(UserLoginMessage message) {
-
         // 这里处理消息
         LoginLog loginLog = new LoginLog();
         BeanUtils.copyProperties(message, loginLog);

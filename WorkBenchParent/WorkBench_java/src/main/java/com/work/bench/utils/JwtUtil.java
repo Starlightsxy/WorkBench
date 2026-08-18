@@ -21,7 +21,11 @@ public final class JwtUtil {
     // 密钥
     private static final String SECRET_KEY = "workbench-jwt-secret-key-workbench";
     // token有效期
-    private static final Long EXPIRE_TIME = 7 * 24 * 60 * 60 * 1000L;
+    private static final Long EXPIRE_TIME = 10 * 60 * 1000L;
+    public static   Long getExpireTime() {
+        return EXPIRE_TIME;
+    }
+//    public static final Long EXPIRE_TIME = 30 * 1000L; // 或直接写 30000L
 
     private final SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
 

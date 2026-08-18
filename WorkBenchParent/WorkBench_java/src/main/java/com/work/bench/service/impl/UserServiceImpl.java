@@ -103,12 +103,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 查询用户信息
         UserInfoVO userInfoVO = getUserInfo(userId);
 
-        // 用户信息存储在redis中
+        // 用户信息存储在redis中 使用和token一样的过期时间
         jsonRedisTemplate.opsForValue().set(
                 RedisCacheKey.REDIS_CACHE_USER_KEY.getValue() + userId,
                 userInfoVO,
-                7,
-                TimeUnit.DAYS
+                JwtUtil.getExpireTime(),
+                TimeUnit.MILLISECONDS
+
         );
 
         /**
@@ -116,16 +117,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
          * // TODO 这里构建消息体这里的登陆状态固定了，还有失败原因还没做处理
          */
         UserLoginMessage userLoginMessage = UserLoginMessage.builder()
-                 .userId(userId)
+                .userId(userId)
                 .account(account)
                 .loginIp(RequestUtils.getClientIp(request))
                 .loginStatus(LoginLogStatus.SUCCESS.getCode())
                 .failReason("")
                 .userAgent(request.getHeader("user-agent"))
-                .loginTime(System.currentTimeMillis()/1000)
+                .loginTime(System.currentTimeMillis() / 1000)
                 .build();
         // 发送消息队列给消费者
-        rabbitTemplate.convertAndSend(RabbitMQConfig.USER_EXCHANGE, RabbitMQConfig.USER_LOGIN_ROUTING_KEY,userLoginMessage);
+        rabbitTemplate.convertAndSend(RabbitMQConfig.USER_EXCHANGE, RabbitMQConfig.USER_LOGIN_ROUTING_KEY, userLoginMessage);
 
         // 封装成VO返回前端
         return new LoginVO(token);

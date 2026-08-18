@@ -55,6 +55,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             UserInfoVO userInfoVO = (UserInfoVO) jsonRedisTemplate.opsForValue()
                     .get(RedisCacheKey.REDIS_CACHE_USER_KEY.getValue() + userId);
 
+            // 处理redis可能没有数据
+            if (userInfoVO == null) {
+                // 不设置 Authentication
+                // 继续执行后面的 Spring Security Filter
+                filterChain.doFilter(request, response);
+                return;
+            }
+
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(userInfoVO, null, Collections.emptyList());
 
