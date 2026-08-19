@@ -1,4 +1,7 @@
 // token 的状态管理
+
+import { ApiResponse, LoginUser } from "../../type"
+
 // key
 const acc = "accessToken-storage"
 const ref = "refreshToken-storage"
@@ -31,3 +34,45 @@ export const removeTokenStorage = () => {
 	uni.removeStorageSync(acc)
 	uni.removeStorageSync(ref)
 }
+
+// 封装刷新token请求
+export const refresh = () : Promise<boolean> => {
+	console.log('refresh Token')
+		return new Promise((resolve) => {
+			uni.request<ApiResponse<LoginUser>>({
+				url: "http://192.168.146.254:3000/user/refresh",
+				method: 'POST',
+				data: {
+					refreshToken: getRefreshTokenStorage() ? getRefreshTokenStorage() : null
+				},
+				timeout: 5000,
+				success: (e : RequestSuccess<ApiResponse<LoginUser>>) => {
+					if (e.data == null) return
+					const res = e.data
+					// 服务端错误
+					if (res.code === 0) {
+						uni.showToast({
+							title: res.message,
+							icon: 'error'
+						})
+						resolve(false)
+						return
+					}
+
+					if (res.data == null) return
+					// 换新token
+					setAccessTokenStorage(res.data?.accessToken as string)
+					setRefreshTokenStorage(res.data?.refreshToken as string)
+					resolve(true)
+
+				}, fail(e) {
+					if (e == null) return
+					uni.showToast({
+						title: e.data as string,
+						icon: 'error'
+					})
+					resolve(false)
+				}
+			})
+		})
+	}

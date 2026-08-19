@@ -1,5 +1,5 @@
 <script setup lang="uts">
-	import { getAccessTokenStorage, getRefreshTokenStorage, getUserStorage, setAccessTokenStorage, setRefreshTokenStorage, setUserStorage } from '../../storage';
+	import { getAccessTokenStorage, getRefreshTokenStorage, getUserStorage, refresh, setAccessTokenStorage, setRefreshTokenStorage, setUserStorage } from '../../storage';
 	import { ApiResponse, ApiResponseUTS, LoginUser, UserInfoVO } from '../../type';
 	import { RequestError, get } from '../../utils/request';
 
@@ -29,86 +29,75 @@
 		if (nowHourse >= 18 && nowHourse < 24) return "晚上好：";
 		return "";
 	});
-	const refresh = () => {
-		uni.request<ApiResponse<LoginUser>>({
-			url: "http://192.168.146.254:3000/user/refresh",
-			method: 'POST',
-			data: {
-				refreshToken: getRefreshTokenStorage() ? getRefreshTokenStorage() : null
-			},
-			timeout: 5000,
-			success: (e : RequestSuccess<ApiResponse<LoginUser>>) => {
-				if (e.data == null) return
-				const res = e.data
-				// 服务端错误
-				if (res.code === 0) {
-					uni.showToast({
-						title: res.message,
-						icon: 'error'
-					})
-					return
-				}
-
-				if (res.data == null) return
-				// 换新token
-				setAccessTokenStorage(res.data?.accessToken as string)
-				setRefreshTokenStorage(res.data?.refreshToken as string)
-
-			}, fail(e) {
-				if (e == null) return
-				uni.showToast({
-					title: e.data as string,
-					icon: 'error'
-				})
-			}
-		})
-	}
 	// 获取当前日期时间年月日周几
 	const nowDay = computed(() => {
 		return `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 周${dayStr[now.getDay() - 1]}`;
 	});
 
-	// 获取用户信息
-	const getUser = () => {
+	const requestUserInfo = () : Promise<ApiResponse<UserInfoVO> | null> => {
+		return new Promise((resolve) => {
 
-		uni.request<ApiResponse<UserInfoVO>>({
-			url: "http://192.168.146.254:3000/user/getUserInfo",
-			method: "GET",
-			header: {
-				Authorization: 'Bearer ' + getAccessTokenStorage()
-			},
-			timeout: 5000,
-			success: (e : RequestSuccess<ApiResponse<UserInfoVO>>) => {
+			uni.request<ApiResponse<UserInfoVO>>({
+				url: "http://192.168.146.254:3000/user/getUserInfo",
+				method: "GET",
+				header: {
+					Authorization: "Bearer " + getAccessTokenStorage()
+				},
+				timeout: 5000,
 
-				if (e.data == null) return
-				const res = e.data
-				// 服务端错误
-				if (res.code === 0) {
+				success: (e : RequestSuccess<ApiResponse<UserInfoVO>>) => {
+					resolve(e.data)
+				},
+
+				fail: (e) => {
 					uni.showToast({
-						title: res.message,
-						icon: 'error'
+						title: e.errMsg,
+						icon: "error"
 					})
-					return
-				}
-				// 401，accessToken过期，需要刷新token
-				if (res.code === 401) {
-					refresh()
-				}
 
-				if (res.data == null) return
-				console.log(res.data)
-				setUserStorage(res.data);
-				userInfo.value = res.data
-			}, fail(e) {
+					resolve(null)
+				}
+			})
+		})
+	}
+	const getUser = async () => {
 
-				if (e == null) return
-				uni.showToast({
-					title: e.data as string,
-					icon: 'error'
-				})
+		// 第一次请求
+		let res = await requestUserInfo()
+		if (res == null) return
+		if (res.code === 0) {
+			uni.showToast({
+				title: res.message,
+				icon: 'error'
+			})
+		}
+
+
+		// accessToken 过期
+		if (res.code === 401) {
+
+			// 等待刷新 Token
+			const success = await refresh()
+
+			// refreshToken 也失效
+			if (!success) {
+				return
 			}
-		});
-	};
+
+			// 刷新成功，重新请求用户信息
+			res = await requestUserInfo()
+
+			// 重试后仍然 401
+			if (res == null || res.code === 401) {
+				console.log("Token 刷新后仍然无效")
+				return
+			}
+		}
+		console.log(res.data)
+		if (res.data == null) return
+		setUserStorage(res.data)
+		userInfo.value = res.data
+	}
 
 	// 任务进度条
 	const pageList = ref([0, 25, 50, 75, 100]);
