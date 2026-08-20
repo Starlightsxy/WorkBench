@@ -11,6 +11,7 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -18,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -78,7 +80,14 @@ public class LogAspect {
             result = joinPoint.proceed(args);
             long endTime = System.currentTimeMillis();
             long time = endTime - startTime;
-            addLog(joinPoint, "", time);
+            String outParams = JSONUtil.toJsonStr(result);
+            // 若结果为空或特殊类型，可作处理
+            if (result == null) {
+                outParams = "null";
+            } else if (result instanceof ResponseEntity) {
+                outParams = "ResponseEntity status=" + ((ResponseEntity<?>) result).getStatusCode();
+            }
+            addLog(joinPoint, outParams, time);
         } catch (Exception e) {
             log.error("doAround日志记录异常，信息为：", e);
             throw e;
@@ -124,12 +133,37 @@ public class LogAspect {
 
     /**
      * 过滤一些参数类型：文件类型、httpServlet、httpResponse类型
+     *
      * @param args
      * @return
      */
-    private List<Object> filterArgs(Object[] args) {
-        return Arrays.stream(args).filter(object -> !(object instanceof MultipartFile)
-                && !(object instanceof HttpServletRequest)
-                && !(object instanceof HttpServletResponse)).collect(Collectors.toList());
+    private Object[] filterArgs(Object[] args) {
+        if (args == null) return new Object[0];
+        return Arrays.stream(args)
+                .map(arg -> {
+                    if (arg == null) return null;
+                    // 处理 Http 相关对象
+                    if (arg instanceof HttpServletRequest) {
+                        return "HttpServletRequest";  // 或只记录请求URL
+                    }
+                    if (arg instanceof HttpServletResponse) {
+                        return "HttpServletResponse";
+                    }
+                    // 处理文件上传
+                    if (arg instanceof MultipartFile) {
+                        MultipartFile file = (MultipartFile) arg;
+                        return String.format("MultipartFile[name=%s, size=%d]", file.getOriginalFilename(), file.getSize());
+                    }
+                    // 处理集合/数组过大
+                    if (arg instanceof Collection) {
+                        Collection<?> coll = (Collection<?>) arg;
+                        if (coll.size() > 10) {
+                            return "Collection[size=" + coll.size() + "]";
+                        }
+                    }
+                    // 其他对象直接返回（由 JSONUtil 序列化）
+                    return arg;
+                })
+                .toArray();
     }
 }

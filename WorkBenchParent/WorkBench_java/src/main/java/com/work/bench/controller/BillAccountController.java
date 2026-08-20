@@ -1,6 +1,7 @@
 package com.work.bench.controller;
 
 import com.work.bench.service.BillAccountService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,6 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/account")
+@Tag(name="账户相关")
+
 public class BillAccountController {
 
     private final BillAccountService billAccountService;

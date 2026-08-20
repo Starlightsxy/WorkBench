@@ -26,6 +26,7 @@
         <hutool.version>5.8.38</hutool.version>
         <mybatis-plus.version>3.5.14</mybatis-plus.version>
         <jwt.version>0.11.5</jwt.version>
+        <knife4j.version>4.4.0</knife4j.version>
     </properties>
 
     <modules>
@@ -50,7 +51,6 @@
                 <artifactId>hutool-all</artifactId>
                 <version>${hutool.version}</version>
             </dependency>
-
 
 
             <!--            jwt-->
@@ -80,6 +80,13 @@
                 <artifactId>mybatis-plus-boot-starter</artifactId>
                 <version>${mybatis-plus.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>com.github.xiaoymin</groupId>
+                <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
+                <version>${knife4j.version}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 

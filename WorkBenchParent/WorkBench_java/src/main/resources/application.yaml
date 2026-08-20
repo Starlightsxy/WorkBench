@@ -23,3 +23,21 @@ spring:
     username: admin
     password: 123456
     virtual-host: /
+# springdoc-openapi项目配置
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html # 文档地址
+    tags-sorter: alpha
+    operations-sorter: alpha
+  api-docs:
+    path: /v3/api-docs # 指定 OpenAPI 规范 JSON 文档的访问路径。
+  group-configs:
+    - group: 'workApp'
+      paths-to-match: '/**'
+      packages-to-scan: com.work.bench
+# knife4j的增强配置，不需要增强可以不配
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+    enable-group: true

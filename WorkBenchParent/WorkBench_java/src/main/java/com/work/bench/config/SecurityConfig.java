@@ -93,7 +93,21 @@ public class SecurityConfig {
 
                 // 配置拦截
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/user/login","/ws","/user/refresh").permitAll() // 允许访问login，
+                        .requestMatchers(
+                                "/user/login",
+                                "/ws",
+                                "/user/refresh",
+                                // Swagger UI 原生路径
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**",
+                                "/webjars/**",
+
+                                // Knife4j 增强 UI（如果启用）
+                                "/doc.html",
+                                "/favicon.ico"
+
+                        ).permitAll() // 允许访问login，
                         .anyRequest().authenticated()// 其他请求都必须走认证
                 )
 
