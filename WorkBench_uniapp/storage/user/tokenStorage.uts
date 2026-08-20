@@ -12,7 +12,7 @@ export const setAccessTokenStorage = (data : string) => {
 
 
 // 获取accToken
-export const getAccessTokenStorage = () : string  => {
+export const getAccessTokenStorage = () : string => {
 	return uni.getStorageSync(acc) as string
 
 }
@@ -24,7 +24,7 @@ export const setRefreshTokenStorage = (data : string) => {
 
 
 // 获取refToken
-export const getRefreshTokenStorage = () : string  => {
+export const getRefreshTokenStorage = () : string => {
 	return uni.getStorageSync(ref) as string
 
 }
@@ -34,45 +34,98 @@ export const removeTokenStorage = () => {
 	uni.removeStorageSync(acc)
 	uni.removeStorageSync(ref)
 }
+// 统一refreshPromise 防止并发
+let refreshPromise : Promise<boolean> | null = null;
+
+// 统一检查res.code === 0
+function handleError<T>(res : ApiResponse<T> | null) : boolean {
+	if (res == null) return false;
+	if (res.code == 0) {
+		uni.showToast({ title: res.message, icon: 'error' });
+		return true; // 表示发生业务错误
+	}
+	return false;
+};
 
 // 封装刷新token请求
 export const refresh = () : Promise<boolean> => {
-	console.log('refresh Token')
-		return new Promise((resolve) => {
-			uni.request<ApiResponse<LoginUser>>({
-				url: "http://192.168.146.254:3000/user/refresh",
-				method: 'POST',
-				data: {
-					refreshToken: getRefreshTokenStorage() ? getRefreshTokenStorage() : null
-				},
-				timeout: 5000,
-				success: (e : RequestSuccess<ApiResponse<LoginUser>>) => {
-					if (e.data == null) return
-					const res = e.data
-					// 服务端错误
-					if (res.code === 0) {
-						uni.showToast({
-							title: res.message,
-							icon: 'error'
-						})
-						resolve(false)
-						return
-					}
-
-					if (res.data == null) return
-					// 换新token
-					setAccessTokenStorage(res.data?.accessToken as string)
-					setRefreshTokenStorage(res.data?.refreshToken as string)
-					resolve(true)
-
-				}, fail(e) {
-					if (e == null) return
-					uni.showToast({
-						title: e.data as string,
-						icon: 'error'
-					})
-					resolve(false)
-				}
-			})
-		})
+	// 如果已经有刷新进行中，直接返回该 Promise
+	if (refreshPromise) {
+		return refreshPromise!;  // ✅ 现在类型匹配了
 	}
+	refreshPromise = new Promise((resolve) => {
+
+		uni.request<ApiResponse<LoginUser>>({
+			url: "http://192.168.146.254:3000/user/refresh",
+			method: 'POST',
+			data: {
+				refreshToken: getRefreshTokenStorage() ? getRefreshTokenStorage() : null
+			},
+			timeout: 5000,
+			success: (e : RequestSuccess<ApiResponse<LoginUser>>) => {
+
+				if (!e.data) {
+					resolve(false);
+					return;
+				}
+				const res = e.data
+				if (handleError(res)) {
+					resolve(false)
+					return
+				};
+
+				if (!res.data) {
+					resolve(false);
+					return;
+				}
+				// 换新token
+				setAccessTokenStorage(res.data?.accessToken as string)
+				setRefreshTokenStorage(res.data?.refreshToken as string)
+				resolve(true)
+
+			}, fail(e) {
+				if (e == null) return
+				console.log("refresh：", e)
+				uni.showToast({
+					title: e.data as string,
+					icon: 'error'
+				})
+				resolve(false)
+			}
+		})
+	})
+	return (refreshPromise?.finally(() => {
+		refreshPromise = null;
+	}) ?? Promise.resolve(false));
+}
+
+
+// 重试请求
+export async function refreshHandler<T>(res : ApiResponse<T>, retryFn : () => Promise<ApiResponse<T> | null>)
+	: Promise<ApiResponse<T> | null> {
+	if (handleError(res)) return null;
+	// accessToken 过期
+	if (res.code == 401) {
+		// 等待刷新token
+		const success = await refresh();
+		if (!success) return null;
+
+
+		// 刷新成功重新请求信息
+		const retryRes = await retryFn()
+		if (!retryRes) return null
+		// 重试后检查业务错误
+		if (handleError(retryRes)) return null;
+
+		// 重试仍然401
+		if (retryRes?.code == 401) {
+			console.log("token 刷新后仍然无效");
+			// 可跳转登录
+			return null;
+		}
+		return retryRes;
+	}
+	console.log("refreshHandler：", res)
+
+	return res;
+};

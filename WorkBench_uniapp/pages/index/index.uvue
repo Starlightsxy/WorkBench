@@ -1,6 +1,9 @@
 <script setup lang="uts">
-	import { getAccessTokenStorage, getRefreshTokenStorage, getUserStorage, refresh, setAccessTokenStorage, setRefreshTokenStorage, setUserStorage } from '../../storage';
+	import { getAnniversaryList } from '../../api/modules/Anniversary';
+	import { getUserInfo } from '../../api/modules/User';
+	import { getAccessTokenStorage, getRefreshTokenStorage, getUserStorage, refresh, refreshHandler, setAccessTokenStorage, setRefreshTokenStorage, setUserStorage } from '../../storage';
 	import { ApiResponse, ApiResponseUTS, LoginUser, UserInfoVO } from '../../type';
+	import { Anniversarys } from '../../type/module/anniversary';
 	import { RequestError, get } from '../../utils/request';
 
 	// 用户信息
@@ -34,69 +37,21 @@
 		return `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 周${dayStr[now.getDay() - 1]}`;
 	});
 
-	const requestUserInfo = () : Promise<ApiResponse<UserInfoVO> | null> => {
-		return new Promise((resolve) => {
 
-			uni.request<ApiResponse<UserInfoVO>>({
-				url: "http://192.168.146.254:3000/user/getUserInfo",
-				method: "GET",
-				header: {
-					Authorization: "Bearer " + getAccessTokenStorage()
-				},
-				timeout: 5000,
-
-				success: (e : RequestSuccess<ApiResponse<UserInfoVO>>) => {
-					resolve(e.data)
-				},
-
-				fail: (e) => {
-					uni.showToast({
-						title: e.errMsg,
-						icon: "error"
-					})
-
-					resolve(null)
-				}
-			})
-		})
-	}
 	const getUser = async () => {
 
 		// 第一次请求
-		let res = await requestUserInfo()
-		if (res == null) return
-		if (res.code === 0) {
-			uni.showToast({
-				title: res.message,
-				icon: 'error'
-			})
+		let response = await getUserInfo()
+		if (!response) return
+		const finalResult = await refreshHandler(response!, () => getUserInfo())
+
+		if (finalResult) {
+			if (finalResult?.data == null) return
+			setUserStorage(finalResult.data)
+			userInfo.value = finalResult.data
 		}
 
 
-		// accessToken 过期
-		if (res.code === 401) {
-
-			// 等待刷新 Token
-			const success = await refresh()
-
-			// refreshToken 也失效
-			if (!success) {
-				return
-			}
-
-			// 刷新成功，重新请求用户信息
-			res = await requestUserInfo()
-
-			// 重试后仍然 401
-			if (res == null || res.code === 401) {
-				console.log("Token 刷新后仍然无效")
-				return
-			}
-		}
-		console.log(res.data)
-		if (res.data == null) return
-		setUserStorage(res.data)
-		userInfo.value = res.data
 	}
 
 	// 任务进度条
@@ -180,57 +135,37 @@
 	}
 
 	// 获取纪念日
-	const getAnniversary = () => {
-		uni.request<ApiResponseUTS>({
-
-			url: "http://192.168.146.254:3000/anniversary/anniversary/lists",
-			method: "GET",
-			header: {
-				Authorization: 'Bearer ' + getAccessTokenStorage()
-			},
-			success: (e : RequestSuccess<ApiResponseUTS>) => {
-				// 1. 检查响应是否存在
-				if (!e.data) return;
-				// 2. 检查 HTTP 状态
-				if (e.statusCode !== 200) {
-					console.log(e.statusCode);
-					return;
-				}
-				// 3. 检查业务状态
-				if (e.data.code !== 1) {
-					console.log(e.data.message);
-					return;
-				}
-				// 4. 处理数据
-				const data = e.data.data;
-				if (data != null && data.length > 0) {
-					annList.value = data.map((item : UTSJSONObject) : UTSJSONObject => {
-						const type = item["type"] == null ? '' : item["type"] as string;
-						const birthdaySeconds = item["anniversaryDate"] as number;
-						const days = getDaysUntilNextBirthday(birthdaySeconds);
-						let age = 0;
-						if (type == "生日") {
-							age = getNextBirthdayAge(birthdaySeconds);
-						}
-
-						return {
-							title: item["title"] == null ? '' : item["title"] as string,
-							anniversaryDate: days,
-							type: type,
-							icon: item["icon"] == null ? '' : item["icon"] as string,
-							remark: item["remark"] == null ? '' : item["remark"] as string,
-							color: item["color"] == null ? '' : item["color"] as string,
-							age: age
-						};
-					});
-					// refreshRandom(annListLength.value); // 数据到达后随机
-				}
-			},
-			fail: (err) => {
-				console.log(err.data)
+	const getAnniversary = async () => {
+		// 初次请求获取纪念日
+		let response = await getAnniversaryList()
+		// 为空就return
+		if (!response) return
+		console.log("response：", response)
+		// 处理可能需要刷新token的问题
+		const finalResult = await refreshHandler(response!, () => getAnniversaryList())
+		if (finalResult) {
+			if (finalResult?.data == null) return
+			// 后续数据处理
+			const data = finalResult.data
+			if (data && data.length > 0) {
+				annList.value = data.map((item) => {
+					let age = 0;
+					const days = getDaysUntilNextBirthday(item.anniversaryDate)
+					if (item.type == "生日") {
+						age = getNextBirthdayAge(item.anniversaryDate)
+					}
+					return {
+						...item,
+						age: age,
+						anniversaryDate: days
+					}
+				})
 			}
-		});
-	};
+
+		}
+
+	}
+
 
 	let timerId : number | null = null;
 
@@ -281,7 +216,7 @@
 			<view class="mt-20 pl-10" style="box-sizing: border-box;">
 				<view>
 					<text class="fts-200" style="font-weight: bold;">
-						{{timeGreeting}}{{userInfo?.nickName}}
+						<!-- {{timeGreeting}}{{userInfo?.nickName}} -->
 					</text>
 					<text class="fts-14">
 						{{`今天是${nowDay}，让一切尽然有序。`}}

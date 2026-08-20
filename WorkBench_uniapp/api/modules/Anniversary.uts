@@ -1,0 +1,27 @@
+import { getAccessTokenStorage } from "../../storage"
+import { ApiResponse } from "../../type"
+import { Anniversarys } from "../../type/module/anniversary"
+
+export const getAnniversaryList = () : Promise<ApiResponse<Anniversarys[]> | null> => {
+	return new Promise((resolve) => {
+		uni.request<ApiResponse<Anniversarys[]>>({
+			url: "http://192.168.146.254:3000/anniversary/lists",
+			method: "GET",
+			header: {
+				Authorization: 'Bearer ' + getAccessTokenStorage()
+			},
+			success: (e : RequestSuccess<ApiResponse<Anniversarys[]>>) => {
+				resolve(e.data)
+
+			}, fail: (err) => {
+				console.log(err)
+				uni.showToast({
+					title: err.errMsg,
+					icon: 'error'
+				})
+				resolve(null)
+			}
+
+		})
+	})
+}

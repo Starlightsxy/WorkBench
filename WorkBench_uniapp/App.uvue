@@ -18,7 +18,7 @@
 	// #ifdef APP-ANDROID || APP-HARMONY
 	onLastPageBackPress(() => {
 		console.log('App LastPageBackPress')
-		if (firstBackTime === 0) {
+		if (firstBackTime == 0) {
 			uni.showToast({
 				title: '再按一次退出应用',
 				position: 'bottom',

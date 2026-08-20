@@ -1,0 +1,10 @@
+export type Anniversarys = {
+	title : string;
+	anniversaryDate : number;
+	type : string;
+	icon : string;
+	remark : string;
+	color : string;
+}
+
+
