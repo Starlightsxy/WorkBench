@@ -3,3 +3,4 @@
 export * from "./user/LoginStorage.uts";
 export * from "./user/userStorage.uts";
 export * from "./user/tokenStorage.uts";
+export * from "./user/webSocket.uts";

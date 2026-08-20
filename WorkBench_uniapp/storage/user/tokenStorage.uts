@@ -2,6 +2,8 @@
 
 import { ApiResponse, LoginUser } from "../../type"
 
+
+
 // key
 const acc = "accessToken-storage"
 const ref = "refreshToken-storage"
@@ -46,6 +48,7 @@ function handleError<T>(res : ApiResponse<T> | null) : boolean {
 	}
 	return false;
 };
+
 
 // 封装刷新token请求
 export const refresh = () : Promise<boolean> => {
@@ -99,7 +102,7 @@ export const refresh = () : Promise<boolean> => {
 	}) ?? Promise.resolve(false));
 }
 
-
+/*
 // 重试请求
 export async function refreshHandler<T>(res : ApiResponse<T>, retryFn : () => Promise<ApiResponse<T> | null>)
 	: Promise<ApiResponse<T> | null> {
@@ -129,3 +132,4 @@ export async function refreshHandler<T>(res : ApiResponse<T>, retryFn : () => Pr
 
 	return res;
 };
+*/

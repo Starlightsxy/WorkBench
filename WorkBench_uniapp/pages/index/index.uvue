@@ -1,10 +1,9 @@
 <script setup lang="uts">
-	import { getAnniversaryList } from '../../api/modules/Anniversary';
-	import { getUserInfo } from '../../api/modules/User';
-	import { getAccessTokenStorage, getRefreshTokenStorage, getUserStorage, refresh, refreshHandler, setAccessTokenStorage, setRefreshTokenStorage, setUserStorage } from '../../storage';
-	import { ApiResponse, ApiResponseUTS, LoginUser, UserInfoVO } from '../../type';
-	import { Anniversarys } from '../../type/module/anniversary';
-	import { RequestError, get } from '../../utils/request';
+	import { getAnniversaryList, getTaskList, getUserInfo } from '../../api';
+	import { setUserStorage } from '../../storage';
+	import { UserInfoVO } from '../../type';
+
+
 
 	// 用户信息
 	const userInfo = ref<UserInfoVO>({
@@ -42,20 +41,13 @@
 
 		// 第一次请求
 		let response = await getUserInfo()
-		if (!response) return
-		const finalResult = await refreshHandler(response!, () => getUserInfo())
-
-		if (finalResult) {
-			if (finalResult?.data == null) return
-			setUserStorage(finalResult.data)
-			userInfo.value = finalResult.data
-		}
+		if (!response?.data) return
+		setUserStorage(response?.data)
+		userInfo.value = response.data
 
 
 	}
 
-	// 任务进度条
-	const pageList = ref([0, 25, 50, 75, 100]);
 	// 后端返回过来所赋值的数据
 	const annList = ref<UTSJSONObject[]>([]);
 	// 随机展示的数据
@@ -137,32 +129,67 @@
 	// 获取纪念日
 	const getAnniversary = async () => {
 		// 初次请求获取纪念日
-		let response = await getAnniversaryList()
-		// 为空就return
-		if (!response) return
-		console.log("response：", response)
-		// 处理可能需要刷新token的问题
-		const finalResult = await refreshHandler(response!, () => getAnniversaryList())
-		if (finalResult) {
-			if (finalResult?.data == null) return
-			// 后续数据处理
-			const data = finalResult.data
-			if (data && data.length > 0) {
-				annList.value = data.map((item) => {
-					let age = 0;
-					const days = getDaysUntilNextBirthday(item.anniversaryDate)
-					if (item.type == "生日") {
-						age = getNextBirthdayAge(item.anniversaryDate)
-					}
-					return {
-						...item,
-						age: age,
-						anniversaryDate: days
-					}
-				})
-			}
+		let res = await getAnniversaryList()
 
+		if (res?.data == null) return
+		// 后续数据处理
+		const data = res.data
+		if (data && data.length > 0) {
+			annList.value = data.map((item) => {
+				let age = 0;
+				const days = getDaysUntilNextBirthday(item.anniversaryDate)
+				if (item.type == "生日") {
+					age = getNextBirthdayAge(item.anniversaryDate)
+				}
+				return {
+					...item,
+					age: age,
+					anniversaryDate: days
+				}
+			})
 		}
+	}
+
+	// 已完成任务数量
+	const completedTime = ref(0)
+	// 实际任务数量
+	const actualTask = ref(0)
+	// 总任务数量
+	const totalTask = ref(0)
+	// 任务取消
+	const cancelTask = ref(0)
+	// 任务进度条
+	const pageList = ref([0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100]);
+	// 任务进度下标
+	const pageIndex = computed(() => {
+		if (totalTask.value === 0) {
+			return 0
+		}
+
+		// 已完成任务占比
+		const completedPercent =
+			(completedTime.value / (totalTask.value - cancelTask.value)) * 100
+
+		// 根据 5% 一个档位计算下标
+		return Math.ceil(completedPercent / 5)
+	})
+	// 获取任务待办
+	const getTasks = async () => {
+		// 初次请求获取纪念日
+		const res = await getTaskList()
+		// 为空就return
+		if (!res) return
+		const data = res?.data
+
+		// 总任务计算
+		totalTask.value = data?.length ?? 0
+		// 已完成任务计算
+		completedTime.value = data?.filter(i => i.status == "已完成").length ?? 0
+		// 已取消任务计算
+		cancelTask.value = data?.filter(i => i.status == "已取消").length ?? 0
+		// 实际任务数量 = 总任务 - 取消任务
+		actualTask.value = totalTask.value - cancelTask.value
+
 
 	}
 
@@ -175,7 +202,7 @@
 
 		getUser();
 		getAnniversary();
-
+		getTasks()
 		timerId = setInterval(() => {
 			if (annList.value.length > 0) {
 				if (annListLength.value == annList.value.length) {
@@ -213,19 +240,20 @@
 		</view>
 		<!-- welcome -->
 		<scroll-view direction="vertical" style="height: 92%; padding-bottom:20px; ">
-			<view class="mt-20 pl-10" style="box-sizing: border-box;">
+			<view class="mt-10 pl-10" style="box-sizing: border-box;">
+				<text style="font-size: 50px;">
+					<!-- 当分钟是0-9区间时使用 String(now.getMinutes()).padStart(2, '0') 补0 -->
+					{{now.getHours() + ":" + now.getMinutes().toString().padStart(2, '0')}}
+				</text>
 				<view>
 					<text class="fts-200" style="font-weight: bold;">
-						<!-- {{timeGreeting}}{{userInfo?.nickName}} -->
+						{{timeGreeting}}{{userInfo?.nickName}}
 					</text>
 					<text class="fts-14">
 						{{`今天是${nowDay}，让一切尽然有序。`}}
 					</text>
 				</view>
-				<text style="font-size: 50px;">
-					<!-- 当分钟是0-9区间时使用 String(now.getMinutes()).padStart(2, '0') 补0 -->
-					{{now.getHours() + ":" + now.getMinutes().toString().padStart(2, '0')}}
-				</text>
+
 			</view>
 			<!-- 今日待办 -->
 			<view class="tasks" style="background-color: #ffffff;">
@@ -235,17 +263,38 @@
 							style="background-color: #0066ff; border-radius: 50%;width: 40px;height: 40px; justify-content: center;align-items: center;">
 							<image class="homeImg" src="/static/image/index/task_index.png"></image>
 						</view>
-						<text class='fts-20 pl-10'>今日待办</text>
+						<text class='fts-20 pl-10' style="font-weight: bold;">今日待办</text>
 					</view>
 					<!-- 进度条 -->
-					<view style="margin-top: 50px;">
-						<!-- 带颜色和宽度的进度条 -->
-						<view style="display: flex; flex-direction: row; align-items: center;">
-							<text style="font-size: 24;">3</text>
-							<text class="fts-12"
-								style="margin-left: 4rpx; align-self: flex-end; color:#868787 ; margin-bottom: 6rpx;">/5已完成</text>
+					<view style="margin-top: 10px;">
+						<view class="todo-stats-wrapper">
+							<!-- 四宫格统计数据 -->
+							<view class="stats-grid-row">
+								<view class="stats-column">
+									<text class="stats-label">总任务</text>
+									<text class="stats-number">{{totalTask}}</text>
+								</view>
+								<view class="stats-column">
+									<text class="stats-label">实际</text>
+									<text class="stats-number">{{actualTask}}</text>
+								</view>
+								<view class="stats-column">
+									<text class="stats-label">取消</text>
+									<text class="stats-number text-danger">{{cancelTask}}</text>
+								</view>
+								<view class="stats-column">
+									<text class="stats-label">完成</text>
+									<text class="stats-number text-success">{{completedTime}}</text>
+								</view>
+							</view>
+
+							<!-- 进度文字说明 -->
+							<view class="progress-label-row">
+								<text class="progress-text-hint">完成进度</text>
+								<text class="progress-fraction-value">{{completedTime}} / {{actualTask}}</text>
+							</view>
 						</view>
-						<progress :percent="pageList[1]" :stroke-width="6"
+						<progress :percent="pageList[pageIndex]" :stroke-width="6"
 							style="border-radius: 3px; margin-top: 5px;" />
 
 					</view>
@@ -342,6 +391,68 @@
 </template>
 
 <style scoped>
+	/* 统计模块容器 */
+	.todo-stats-wrapper {
+		padding-left: 5px;
+		box-sizing: border-box;
+		flex-direction: column;
+	}
+
+	/* 四宫格布局 */
+	.stats-grid-row {
+		flex-direction: row;
+		justify-content: space-between;
+		margin-bottom: 15px;
+	}
+
+	.stats-column {
+		flex-direction: column;
+		align-items: flex-start;
+		flex: 1;
+	}
+
+	.stats-label {
+		font-size: 13px;
+		color: #7b87a0;
+		/* 适配您代码中的次要文字颜色 */
+		margin-bottom: 4px;
+	}
+
+	.stats-number {
+		font-size: 16px;
+		font-weight: bold;
+		color: #1a1a1a;
+	}
+
+	/* 特殊颜色状态 */
+	.text-danger {
+		color: #d32f2f;
+	}
+
+	.text-success {
+		color: #0066ff;
+	}
+
+	/* 进度说明行 */
+	.progress-label-row {
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: flex-end;
+		margin-bottom: 6px;
+	}
+
+	.progress-text-hint {
+		font-size: 13px;
+		color: #7b87a0;
+	}
+
+	.progress-fraction-value {
+		font-size: 15px;
+		font-weight: bold;
+		color: #0066ff;
+	}
+
+
 	.container {
 		background-color: #f9f9ff;
 		height: 100%;

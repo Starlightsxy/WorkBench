@@ -1,18 +1,17 @@
 import { getAccessTokenStorage } from "../../storage"
-import { ApiResponse, UserInfoVO } from "../../type"
+import { ApiResponse, Task } from "../../type"
 
-
-export const getUserInfo = () : Promise<ApiResponse<UserInfoVO> | null> => {
+export const getTaskList = () : Promise<ApiResponse<Task[]> | null> => {
 	return new Promise((resolve) => {
-		uni.request<ApiResponse<UserInfoVO>>({
-			url: "http://192.168.146.254:3000/user/getUserInfo",
+		uni.request<ApiResponse<Task[]>>({
+			url: "http://192.168.146.254:3000/tasks/tasks",
 			method: "GET",
 			header: {
 				Authorization: "Bearer " + getAccessTokenStorage()
 			},
 			timeout: 5000,
 
-			success: (e : RequestSuccess<ApiResponse<UserInfoVO>>) => {
+			success: (e : RequestSuccess<ApiResponse<Task[]>>) => {
 				resolve(e.data)
 			},
 

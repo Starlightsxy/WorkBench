@@ -1,227 +1,297 @@
 <script setup lang="uts">
-	// #ifdef APP-ANDROID || APP-HARMONY
-	let firstBackTime = 0
-	// #endif
+import { refresh } from './storage/user/tokenStorage'
 
-	onLaunch(() => {
-		console.log('App Launch')
-	})
+// Token 自动刷新定时器
+let refreshTokenTimer : number = 0
 
-	onAppShow(() => {
-		console.log('App Show')
-	})
+// #ifdef APP-ANDROID || APP-HARMONY
+let firstBackTime = 0
+// #endif
 
-	onAppHide(() => {
-		console.log('App Hide')
-	})
 
-	// #ifdef APP-ANDROID || APP-HARMONY
-	onLastPageBackPress(() => {
-		console.log('App LastPageBackPress')
-		if (firstBackTime == 0) {
-			uni.showToast({
-				title: '再按一次退出应用',
-				position: 'bottom',
-			})
-			firstBackTime = Date.now()
-			setTimeout(() => {
-				firstBackTime = 0
-			}, 2000)
-		} else if (Date.now() - firstBackTime < 2000) {
-			firstBackTime = Date.now()
-			uni.exit()
+/**
+ * 刷新 Token
+ */
+const refreshToken = async () => {
+	try {
+		await refresh()
+		console.log('Token 自动刷新成功')
+	} catch (e) {
+		console.error('Token 自动刷新失败：', e)
+	}
+}
+
+
+/**
+ * App 启动
+ */
+onLaunch(() => {
+	console.log('App Launch')
+
+		refreshToken()
+
+		refreshTokenTimer = setInterval(() => {
+			refreshToken()
+		}, 5 * 60 * 1000)
+})
+
+
+/**
+ * App 进入前台
+ */
+onAppShow(() => {
+	console.log('App Show')
+})
+
+
+/**
+ * App 进入后台
+ */
+onAppHide(() => {
+	console.log('App Hide')
+})
+
+
+// #ifdef APP-ANDROID || APP-HARMONY
+
+/**
+ * Android / HarmonyOS
+ * 连续点击两次返回键退出 App
+ */
+onLastPageBackPress(() => {
+	console.log('App LastPageBackPress')
+
+	if (firstBackTime == 0) {
+		uni.showToast({
+			title: '再按一次退出应用',
+			position: 'bottom',
+		})
+
+		firstBackTime = Date.now()
+
+		setTimeout(() => {
+			firstBackTime = 0
+		}, 2000)
+	} else if (Date.now() - firstBackTime < 2000) {
+		firstBackTime = Date.now()
+
+		// 退出 App
+		uni.exit()
+	}
+})
+
+
+/**
+ * App 退出
+ */
+onExit(() => {
+	console.log('App Exit')
+
+		if (refreshTokenTimer != 0) {
+			clearInterval(refreshTokenTimer)
+			refreshTokenTimer = 0
 		}
-	})
+})
 
-	onExit(() => {
-		console.log('App Exit')
-	})
-	// #endif
+
+// #endif
 </script>
 
+
 <style>
-	/*每个页面公共css */
-	.uni-row {
-		flex-direction: row;
-	}
+/*每个页面公共css */
+.uni-row {
+	flex-direction: row;
+}
 
-	.uni-column {
-		flex-direction: column;
-	}
+.uni-column {
+	flex-direction: column;
+}
 
-	.txt-center {
-		text-align: center;
-	}
+.txt-center {
+	text-align: center;
+}
 
-	/* font-size fts */
-	.fts-12 {
-		font-size: 12px;
-	}
 
-	.fts-14 {
-		font-size: 14px;
-	}
+/* font-size fts */
+.fts-12 {
+	font-size: 12px;
+}
 
-	.fts-16 {
-		font-size: 16px;
-	}
+.fts-14 {
+	font-size: 14px;
+}
 
-	.fts-18 {
-		font-size: 18px;
-	}
+.fts-16 {
+	font-size: 16px;
+}
 
-	.fts-20 {
-		font-size: 20px;
-	}
+.fts-18 {
+	font-size: 18px;
+}
 
-	/* margin-top .mt */
-	.mt-5 {
-		margin-top: 5px;
-	}
+.fts-20 {
+	font-size: 20px;
+}
 
-	.mt-10 {
-		margin-top: 10px;
-	}
 
-	.mt-15 {
-		margin-top: 15px;
-	}
+/* margin-top .mt */
+.mt-5 {
+	margin-top: 5px;
+}
 
-	.mt-20 {
-		margin-top: 20px;
-	}
+.mt-10 {
+	margin-top: 10px;
+}
 
-	/* margin-right .mr */
-	.mr-5 {
-		margin-right: 5px;
-	}
+.mt-15 {
+	margin-top: 15px;
+}
 
-	.mr-10 {
-		margin-right: 10px;
-	}
+.mt-20 {
+	margin-top: 20px;
+}
 
-	.mr-15 {
-		margin-right: 15px;
-	}
 
-	.mr-20 {
-		margin-right: 20px;
-	}
+/* margin-right .mr */
+.mr-5 {
+	margin-right: 5px;
+}
 
-	/* margin-bottom .mb */
-	.mb-5 {
-		margin-bottom: 5px;
-	}
+.mr-10 {
+	margin-right: 10px;
+}
 
-	.mb-10 {
-		margin-bottom: 10px;
-	}
+.mr-15 {
+	margin-right: 15px;
+}
 
-	.mb-15 {
-		margin-bottom: 15px;
-	}
+.mr-20 {
+	margin-right: 20px;
+}
 
-	.mb-20 {
-		margin-bottom: 20px;
-	}
 
-	/* margin-left .ml*/
-	.ml-5 {
-		margin-left: 5px;
-	}
+/* margin-bottom .mb */
+.mb-5 {
+	margin-bottom: 5px;
+}
 
-	.ml-10 {
-		margin-left: 10px;
-	}
+.mb-10 {
+	margin-bottom: 10px;
+}
 
-	.ml-15 {
-		margin-left: 15px;
-	}
+.mb-15 {
+	margin-bottom: 15px;
+}
 
-	.ml-20 {
-		margin-left: 20px;
-	}
+.mb-20 {
+	margin-bottom: 20px;
+}
 
-	/* padding-top .pt */
-	.pt-5 {
-		padding-top: 5px;
-	}
 
-	.pt-10 {
-		padding-top: 10px;
-	}
+/* margin-left .ml */
+.ml-5 {
+	margin-left: 5px;
+}
 
-	.pt-15 {
-		padding-top: 15px;
-	}
+.ml-10 {
+	margin-left: 10px;
+}
 
-	.pt-20 {
-		padding-top: 20px;
-	}
+.ml-15 {
+	margin-left: 15px;
+}
 
-	/* padding-right .pr */
-	.pr-5 {
-		padding-right: 5px;
-	}
+.ml-20 {
+	margin-left: 20px;
+}
 
-	.pr-10 {
-		padding-right: 10px;
-	}
 
-	.pr-15 {
-		padding-right: 15px;
-	}
+/* padding-top .pt */
+.pt-5 {
+	padding-top: 5px;
+}
 
-	.pr-20 {
-		padding-right: 20px;
-	}
+.pt-10 {
+	padding-top: 10px;
+}
 
-	/* padding-bottom .pb */
-	.pb-5 {
-		padding-bottom: 5px;
-	}
+.pt-15 {
+	padding-top: 15px;
+}
 
-	.pb-10 {
-		padding-bottom: 10px;
-	}
+.pt-20 {
+	padding-top: 20px;
+}
 
-	.pb-15 {
-		padding-bottom: 15px;
-	}
 
-	.pb-20 {
-		padding-bottom: 20px;
-	}
+/* padding-right .pr */
+.pr-5 {
+	padding-right: 5px;
+}
 
-	/* padding-left .pl */
-	.pl-5 {
-		padding-left: 5px;
-	}
+.pr-10 {
+	padding-right: 10px;
+}
 
-	.pl-10 {
-		padding-left: 10px;
-	}
+.pr-15 {
+	padding-right: 15px;
+}
 
-	.pl-15 {
-		padding-left: 15px;
-	}
+.pr-20 {
+	padding-right: 20px;
+}
 
-	.pl-20 {
-		padding-left: 20px;
-	}
 
-	.pd-5 {
-		padding: 5px;
-	}
+/* padding-bottom .pb */
+.pb-5 {
+	padding-bottom: 5px;
+}
 
-	.mr-5 {
-		margin: 5px;
-	}
+.pb-10 {
+	padding-bottom: 10px;
+}
 
-	.flex-space-between {
-		display: flex;
-		flex-direction: row;
-		justify-content: space-between;
-		align-items: center;
-	}
+.pb-15 {
+	padding-bottom: 15px;
+}
+
+.pb-20 {
+	padding-bottom: 20px;
+}
+
+
+/* padding-left .pl */
+.pl-5 {
+	padding-left: 5px;
+}
+
+.pl-10 {
+	padding-left: 10px;
+}
+
+.pl-15 {
+	padding-left: 15px;
+}
+
+.pl-20 {
+	padding-left: 20px;
+}
+
+
+/* 其他 */
+.pd-5 {
+	padding: 5px;
+}
+
+.mr-5 {
+	margin: 5px;
+}
+
+.flex-space-between {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+}
 </style>

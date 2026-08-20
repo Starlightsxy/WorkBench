@@ -1,0 +1,10 @@
+export type Task = {
+	title : string;
+	description : string;
+	status : string;
+	priority : string;
+	dueTime : number;
+	completedTime : number;
+	createTime : number;
+	updateTime : number;
+}

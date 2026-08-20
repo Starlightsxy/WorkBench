@@ -1,6 +1,6 @@
 import { getAccessTokenStorage } from "../../storage"
-import { ApiResponse } from "../../type"
-import { Anniversarys } from "../../type/module/anniversary"
+import { Anniversarys, ApiResponse } from "../../type"
+
 
 export const getAnniversaryList = () : Promise<ApiResponse<Anniversarys[]> | null> => {
 	return new Promise((resolve) => {
