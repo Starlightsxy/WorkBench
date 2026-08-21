@@ -1,0 +1,29 @@
+import { getAccessTokenStorage } from "../../storage"
+import { ApiResponse, Bill } from "../../type"
+
+
+export const getBillList = () : Promise<ApiResponse<Bill[]> | null> => {
+	return new Promise((resolve) => {
+		uni.request<ApiResponse<Bill[]>>({
+			url: "http://192.168.146.254:3000/bill/bills",
+			method: "GET",
+			header: {
+				Authorization: "Bearer " + getAccessTokenStorage()
+			},
+			timeout: 5000,
+
+			success: (e : RequestSuccess<ApiResponse<Bill[]>>) => {
+				resolve(e.data)
+			},
+
+			fail: (e) => {
+				uni.showToast({
+					title: e.errMsg,
+					icon: "error"
+				})
+
+				resolve(null)
+			}
+		})
+	})
+}

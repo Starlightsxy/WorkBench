@@ -1,0 +1,10 @@
+export type Bill = {
+	billDate : number | string;
+	type : string;
+	amount : number;
+	remark : string;
+	categoryName : string;
+	accountName : string;
+	balance : number;
+	icon : string;
+}

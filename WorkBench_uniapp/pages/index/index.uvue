@@ -1,7 +1,8 @@
 <script setup lang="uts">
-	import { getAnniversaryList, getTaskList, getUserInfo } from '../../api';
+	import { getAnniversaryList, getBillList, getTaskList, getUserInfo } from '../../api';
 	import { setUserStorage } from '../../storage';
-	import { UserInfoVO } from '../../type';
+	import { Bill, UserInfoVO } from '../../type';
+	import { amountByTypeAndDateRange, formatAmount, formatBillDate } from '../../utils';
 
 
 
@@ -150,19 +151,21 @@
 		}
 	}
 
-	// 已完成任务数量
-	const completedTime = ref(0)
-	// 实际任务数量
-	const actualTask = ref(0)
+
 	// 总任务数量
 	const totalTask = ref(0)
-	// 任务取消
+	// 取消任务数量
 	const cancelTask = ref(0)
+	// 已完成任务数量
+	const completedTime = ref(0)
+	// 任务进行中也就是未完成任务
+	const pendingTask = ref(0)
+
 	// 任务进度条
 	const pageList = ref([0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100]);
 	// 任务进度下标
 	const pageIndex = computed(() => {
-		if (totalTask.value === 0) {
+		if (totalTask.value == 0) {
 			return 0
 		}
 
@@ -187,22 +190,47 @@
 		completedTime.value = data?.filter(i => i.status == "已完成").length ?? 0
 		// 已取消任务计算
 		cancelTask.value = data?.filter(i => i.status == "已取消").length ?? 0
-		// 实际任务数量 = 总任务 - 取消任务
-		actualTask.value = totalTask.value - cancelTask.value
+		// 正在进行任务 = 总任务 - 取消任务 - 已完成任务
+		pendingTask.value = totalTask.value - completedTime.value - cancelTask.value
+	}
 
+	// 账单列表
+	const bills = ref<Bill[]>([])
+	// 获取最近账单，只显示最近5条
+	const getBills = async () => {
+		const res = await getBillList()
 
+		if (!res || !res?.data) return
+
+		bills.value = res?.data
 	}
 
 
 	let timerId : number | null = null;
 
-
-
-	onLoad(() => {
-
+	// 点击待办任务框，跳转待办页
+	const clickTasks = () => {
+		uni.switchTab({
+			url: '/pages/Tasks/Tasks'
+		})
+	}
+	// 点击即将到来，跳转到纪念页面
+	const clickAnniversary = () => {
+		uni.switchTab({
+			url: "/pages/anniversary/anniversary"
+		})
+	}
+	// 点击查看全部账单跳转账单页面
+	const clickBillMore = () => {
+		uni.switchTab({
+			url: "/pages/Bill/Bill"
+		})
+	}
+	onShow(() => {
 		getUser();
 		getAnniversary();
 		getTasks()
+		getBills()
 		timerId = setInterval(() => {
 			if (annList.value.length > 0) {
 				if (annListLength.value == annList.value.length) {
@@ -213,8 +241,8 @@
 			}
 		}, 2000);
 	});
+	onHide(() => {
 
-	onUnmounted(() => {
 		const id = timerId;
 		if (id !== null) {
 			clearInterval(id);
@@ -240,7 +268,7 @@
 		</view>
 		<!-- welcome -->
 		<scroll-view direction="vertical" style="height: 92%; padding-bottom:20px; ">
-			<view class="mt-10 pl-10" style="box-sizing: border-box;">
+			<view style="box-sizing: border-box;margin-left: 5%;">
 				<text style="font-size: 50px;">
 					<!-- 当分钟是0-9区间时使用 String(now.getMinutes()).padStart(2, '0') 补0 -->
 					{{now.getHours() + ":" + now.getMinutes().toString().padStart(2, '0')}}
@@ -256,7 +284,7 @@
 
 			</view>
 			<!-- 今日待办 -->
-			<view class="tasks" style="background-color: #ffffff;">
+			<view class="tasks" style="background-color: #ffffff;" @click="clickTasks()">
 				<view style="margin: 10px;">
 					<view class="tasks-item">
 						<view
@@ -275,23 +303,27 @@
 									<text class="stats-number">{{totalTask}}</text>
 								</view>
 								<view class="stats-column">
-									<text class="stats-label">实际</text>
-									<text class="stats-number">{{actualTask}}</text>
+									<text class="stats-label">进行中</text>
+									<text class="stats-number">{{pendingTask}}</text>
 								</view>
 								<view class="stats-column">
-									<text class="stats-label">取消</text>
+									<text class="stats-label">已取消</text>
 									<text class="stats-number text-danger">{{cancelTask}}</text>
 								</view>
 								<view class="stats-column">
-									<text class="stats-label">完成</text>
+									<text class="stats-label">已完成</text>
 									<text class="stats-number text-success">{{completedTime}}</text>
 								</view>
 							</view>
 
 							<!-- 进度文字说明 -->
 							<view class="progress-label-row">
-								<text class="progress-text-hint">完成进度</text>
-								<text class="progress-fraction-value">{{completedTime}} / {{actualTask}}</text>
+								<text class="progress-text-hint">完成进度·
+									<text
+										class="text-success fts-14">{{ Math.round((completedTime / (totalTask - cancelTask)) * 100) }}%</text>
+								</text>
+								<text class="progress-fraction-value">{{completedTime}} /
+									{{totalTask - cancelTask}}</text>
 							</view>
 						</view>
 						<progress :percent="pageList[pageIndex]" :stroke-width="6"
@@ -302,7 +334,7 @@
 
 			</view>
 			<!-- 倒数纪念日 -->
-			<view class="anniversary" style="background-color: #d9e1fe;">
+			<view class="anniversary" style="background-color: #d9e1fe;" @click="clickAnniversary()">
 				<view class="flex-space-between" style="margin: 10px;">
 					<view class="ann-item">
 						<view
@@ -311,7 +343,8 @@
 						</view>
 						<text class='fts-20 pl-10'>即将到来</text>
 					</view>
-					<view style=" box-sizing: border-box; padding:3px ;background-color: white;border-radius: 5px; ">
+					<view
+						style=" box-sizing: border-box; padding:3px 5px ;background-color: white;border-radius: 5px; ">
 						<text class="fts-14">{{annRandom['type']}}</text>
 					</view>
 				</view>
@@ -341,48 +374,71 @@
 			</view>
 			<!-- 最近账单 -->
 			<view class="bill" style="background-color: #ffffff;">
-				<view class="flex-space-between " style="margin: 10px;">
-					<view class="bill-item">
-						<view
-							style="background-color: #d8e3fb; border-radius: 50%;width: 40px;height: 40px; justify-content: center;align-items: center;">
-							<image class="homeImg" src="/static/image/index/bill_index.png" mode=""></image>
+				<view class="bill-stats-wrapper">
+					<!-- 顶部标题栏 -->
+					<view class="bill-header-row">
+						<view class="bill-title-box">
+							<view class="bill-icon-container">
+								<image class="bill-main-icon" src="/static/image/index/bill_index.png" mode="aspectFit">
+								</image>
+							</view>
+							<text class="bill-title-text">最近账单</text>
 						</view>
-						<text class='fts-20 pl-10'>最近账单</text>
-					</view>
-					<view style="">
-						<text class="fts-14" style="color: blue; " @click="getUser()">查看全部</text>
-					</view>
-				</view>
-				<!-- 账单列表 只统计最近10个 -->
-				<view class=" bill-items flex-space-between" v-for="item in 10">
-					<view class="bill-left">
-						<view
-							style="background-color: #d8e3fb;  border-radius: 5px; width: 30px;height:30px; justify-content: center;align-items: center;">
-							<image style="width: 20px;height:20px; " src="/static/image/index/bill_index.png" mode="">
-							</image>
-						</view>
-						<view class="ml-10">
-							<text class="fts-16">山姆超市采购</text>
-							<text class="fts-14">今天 10:30</text>
+						<view class="more-action-btn">
+							<text class="more-action-text" @click="clickBillMore()">查看全部</text>
 						</view>
 					</view>
-					<view style="box-sizing: border-box;">
-						<text class="fts-14">-￥435.00</text>
+
+					<!-- 账单列表项示例 -->
+					<view class="bill-list-content">
+						<!-- 循环项 -->
+						<view class="bill-list-item" v-for="(bill,index) in bills" :key="index">
+							<view class="item-left-side">
+								<view class="item-type-icon-bg">
+									<!-- 这里的路径您可以根据分类动态展示，暂时使用您提供的默认路径 -->
+									<image class="item-type-icon" :src="bill.icon" mode="aspectFit"></image>
+								</view>
+								<view class="item-info-stack">
+									<view style="display: flex;flex-direction: row; align-items: center;">
+										<text class="item-name-text">{{bill.categoryName}}</text>
+										<text class="fts-12">·{{bill.remark}}</text>
+									</view>
+									<text class="item-time-text">{{formatBillDate(bill.billDate as number)}}</text>
+								</view>
+							</view>
+							<view class="item-right-side">
+								<text class="item-amount-text"
+									:class="bill.type == '收入' ? 'text-income' : 'text-expense'">
+									{{ bill.type == "收入" ? "+" : "-" }}￥{{ formatAmount(bill.amount) }}
+								</text>
+							</view>
+						</view>
+					</view>
+
+					<!-- 底部汇总区域 -->
+					<view class="bill-footer-summary">
+						<view class="summary-col">
+							<text class="summary-label">今日收入</text>
+							<text class="summary-value">{{`￥${ amountByTypeAndDateRange(bills,"收入","today") }`}}</text>
+						</view>
+						<view class="summary-divider"></view>
+						<view class="summary-col">
+							<text class="summary-label">今日消费</text>
+							<text class="summary-value">{{`￥${amountByTypeAndDateRange(bills,"支出","today")}`}}</text>
+						</view>
+						<view class="summary-divider"></view>
+						<view class="summary-col">
+							<text class="summary-label">最近收入</text>
+							<text class="summary-value">{{`￥${amountByTypeAndDateRange(bills,"收入","recent")}`}}</text>
+						</view>
+						<view class="summary-divider"></view>
+						<view class="summary-col">
+							<text class="summary-label">最近消费</text>
+							<text class="summary-value">{{`￥${amountByTypeAndDateRange(bills,"支出","recent")}`}}</text>
+						</view>
 					</view>
 				</view>
-				<!-- 总计 -->
-				<view class="mb-10 flex-space-between">
-					<view>
-						<text class="fts-14  ml-5">
-							当天消费：1200
-						</text>
-					</view>
-					<view>
-						<text class="fts-14  mr-5">
-							最近消费：1200
-						</text>
-					</view>
-				</view>
+
 			</view>
 		</scroll-view>
 
@@ -500,11 +556,10 @@
 
 	.tasks-item,
 	.ann-item,
-	.bill-item {
-		display: flex;
-		flex-direction: row;
-		align-items: center;
-		/* margin: 20px 0 0 20px; */
+	{
+	display: flex;
+	flex-direction: row;
+	align-items: center;
 	}
 
 	.bill {
@@ -513,7 +568,7 @@
 		box-sizing: border-box;
 		width: 90%;
 		border: 1px #e0e3e5 solid;
-		border-radius: 5px;
+		border-radius: 10px;
 		margin-top: 20px;
 
 	}
@@ -521,26 +576,152 @@
 	.homeImg {
 		width: 35px;
 		height: 35px;
-
 	}
 
-	.bill-items {
-		/* width: 100%; */
-		margin-left: 10px;
-		margin-right: 10px;
-		/* padding: 10px; */
-		padding: 10px 0 10px 0;
-		box-sizing: border-box;
-		border-bottom: 1px #d9e2fc solid;
-		margin-bottom: 10px;
+
+	/* 账单模块内边距 */
+	.bill-stats-wrapper {
+		padding: 15px;
+		flex-direction: column;
 	}
 
-	.bill-left {
+	/* 标题行布局 */
+	.bill-header-row {
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 15px;
+	}
 
-		display: flex;
+	.bill-title-box {
 		flex-direction: row;
 		align-items: center;
-		box-sizing: border-box;
-		/* border: 1px red solid; */
+	}
+
+	.bill-icon-container {
+		width: 36px;
+		height: 36px;
+		background-color: #d8e3fb;
+		border-radius: 50%;
+		justify-content: center;
+		align-items: center;
+	}
+
+	.bill-main-icon {
+		width: 24px;
+		height: 24px;
+	}
+
+	.bill-title-text {
+		font-size: 18px;
+		font-weight: bold;
+		color: #1a1a1a;
+		margin-left: 10px;
+	}
+
+	.more-action-text {
+		font-size: 13px;
+		color: #0066ff;
+		font-weight: 500;
+	}
+
+	/* 列表项布局 */
+	.bill-list-content {
+		flex-direction: column;
+	}
+
+	.bill-list-item {
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+		padding: 12px 0;
+		border-bottom: 1px solid #f0f3ff;
+	}
+
+	.bill-list-item:last-child {
+		border-bottom: none;
+	}
+
+	.item-left-side {
+		flex-direction: row;
+		align-items: center;
+	}
+
+	.item-type-icon-bg {
+		width: 38px;
+		height: 38px;
+		background-color: #f5f7ff;
+		border-radius: 10px;
+		justify-content: center;
+		align-items: center;
+	}
+
+	.item-type-icon {
+		width: 20px;
+		height: 20px;
+	}
+
+	.item-info-stack {
+		flex-direction: column;
+		margin-left: 12px;
+	}
+
+	.item-name-text {
+		font-size: 15px;
+		font-weight: 500;
+		color: #1a1a1a;
+		margin-bottom: 2px;
+	}
+
+	.item-time-text {
+		font-size: 12px;
+		color: #7b87a0;
+	}
+
+	.item-amount-text {
+		font-size: 16px;
+		font-weight: bold;
+	}
+
+	.text-expense {
+		color: #DC2626;
+	}
+
+	.text-income {
+		color: #16A34A;
+	}
+
+	/* 底部汇总布局 */
+	.bill-footer-summary {
+		flex-direction: row;
+		background-color: #f8f9ff;
+		border-radius: 12px;
+		padding: 12px;
+		margin-top: 10px;
+		align-items: center;
+	}
+
+	.summary-col {
+		flex: 1;
+		flex-direction: column;
+		align-items: center;
+	}
+
+	.summary-label {
+		font-size: 11px;
+		color: #7b87a0;
+		margin-bottom: 2px;
+	}
+
+	.summary-value {
+		font-size: 12px;
+		font-weight: bold;
+		color: #1a1a1a;
+	}
+
+	.summary-divider {
+		width: 1px;
+		height: 20px;
+		background-color: #e0e6f0;
 	}
 </style>
