@@ -29,7 +29,7 @@ public class BillCategory {
     // 类型 1收入 2支出  普通索引
     private Integer type;
     // 图标
-    private String icon;
+    private String categoryIcon;
     // 创建时间
     private Long createTime;
     // 修改时间

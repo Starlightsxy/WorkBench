@@ -1,16 +1,14 @@
 package com.work.bench.controller;
 
 import com.work.bench.annotation.AroundLog;
-import com.work.bench.dto.User.RefreshTokenDTO;
-import com.work.bench.dto.User.UserLoginDTO;
+import com.work.bench.dto.user.RefreshTokenDTO;
+import com.work.bench.dto.user.UserLoginDTO;
 import com.work.bench.service.UserService;
 import com.work.bench.utils.Result;
 import com.work.bench.utils.SecurityUtils;
 import com.work.bench.vo.user.LoginTokenVO;
 import com.work.bench.vo.user.UserInfoVO;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;

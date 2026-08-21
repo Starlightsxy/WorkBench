@@ -1,31 +1,31 @@
-package com.work.bench.dto;
+package com.work.bench.dto.billaccount;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 /**
- * 账单分类表 dto
+ * 账户表 dto
  *
  * @author 洁心未眠
  * @Package com.work.bench.dto
- * @date 2026/8/3 16:14
+ * @date 2026/8/3 16:11
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class BillCategoryDTO {
-    // 账单分类表id
+public class BillAccountDTO {
+
+    // 账户表id
     private Integer id;
     // 用户id
     private Integer userId;
-    // 名称
+    // 账户名称
     private String name;
-    // 类型 1收入 2支出  普通索引
-    private Integer type;
+    // 账户余额
+    private BigDecimal balance;
     // 图标
     private String icon;
     // 创建时间

@@ -1,4 +1,4 @@
-package com.work.bench.vo;
+package com.work.bench.vo.bill;
 
 import lombok.Data;
 
@@ -13,6 +13,9 @@ import java.math.BigDecimal;
  */
 @Data
 public class BillVO {
+    /**
+     * 账单id
+     */
     private Integer id;
     /**
      * 支付时间
@@ -33,19 +36,23 @@ public class BillVO {
      */
     private String remark;
     /**
-     * 支付类别
+     * 消费类别
      */
     private String categoryName;
     /**
-     * 支付方式
+     * 类别图标
+     */
+    private String categoryIcon;
+    /**
+     * 支付账户
      */
     private String accountName;
+    /**
+     * 账户图标
+     */
+    private String accountIcon;
     /**
      * 账户余额
      */
     private BigDecimal balance;
-    /**
-     * 支付类别图标
-     */
-    private String icon;
 }

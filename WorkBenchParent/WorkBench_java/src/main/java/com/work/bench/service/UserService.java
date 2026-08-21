@@ -1,8 +1,8 @@
 package com.work.bench.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.work.bench.dto.User.RefreshTokenDTO;
-import com.work.bench.dto.User.UserLoginDTO;
+import com.work.bench.dto.user.RefreshTokenDTO;
+import com.work.bench.dto.user.UserLoginDTO;
 import com.work.bench.pojo.User;
 import com.work.bench.vo.user.LoginTokenVO;
 import com.work.bench.vo.user.UserInfoVO;

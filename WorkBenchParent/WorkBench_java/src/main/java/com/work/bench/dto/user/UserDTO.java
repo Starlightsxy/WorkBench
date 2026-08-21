@@ -1,4 +1,4 @@
-package com.work.bench.dto.User;
+package com.work.bench.dto.user;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

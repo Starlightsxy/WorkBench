@@ -1,4 +1,4 @@
-package com.work.bench.dto;
+package com.work.bench.dto.tasks;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

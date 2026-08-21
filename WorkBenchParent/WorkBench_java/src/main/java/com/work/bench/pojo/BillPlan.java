@@ -10,33 +10,34 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
 /**
- * 账户表
+ * 财务计划表
  *
  * @author 洁心未眠
  * @Package com.work.bench.pojo
- * @date 2026/8/3 16:11
+ * @date 2026/8/21 23:58
  */
-@TableName("tb_bill_account")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class BillAccount {
-
-    // 账户表id
+@TableName("tb_bill_plan")
+public class BillPlan {
+    // 财务计划表id
     @TableId(type = IdType.AUTO)
     private Integer id;
     // 用户id
     private Integer userId;
-    // 账户名称
-    private String name;
-    // 账户余额
-    private BigDecimal balance;
-    // 图标
-    private String accountIcon;
-    // 创建时间
+    // 计划类型 1月度 2年度
+    private Integer planType;
+    // 计划日期
+    private Integer planDate;
+    // 支出预算
+    private BigDecimal budget;
+    // 收入目标
+    private BigDecimal incomeGoal;
+    //    创建时间
     private Long createTime;
-    // 修改时间
+    //    更新时间
     private Long updateTime;
-    // 逻辑删除 0 不删除  1 删除
+    // '逻辑删除 0 不删除  1 删除'
     private Integer deleted;
 }

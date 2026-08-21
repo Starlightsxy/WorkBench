@@ -2,8 +2,8 @@ package com.work.bench.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.work.bench.config.RabbitMQConfig;
-import com.work.bench.dto.User.RefreshTokenDTO;
-import com.work.bench.dto.User.UserLoginDTO;
+import com.work.bench.dto.user.RefreshTokenDTO;
+import com.work.bench.dto.user.UserLoginDTO;
 import com.work.bench.enums.GenderType;
 import com.work.bench.enums.LoginLogStatus;
 import com.work.bench.enums.RedisCacheKey;
@@ -29,7 +29,6 @@ import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
