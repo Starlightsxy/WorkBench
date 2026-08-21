@@ -1,42 +1,88 @@
 <script setup lang="uts">
-import { getUserStorage } from '../../storage';
+	import { getTaskList } from '../../api';
+	import { getUserStorage } from '../../storage';
+	import { Task, saveTaskDTO, tasksStatus } from '../../type';
+	import { dateTimeToTimestamp, formatBillDate, formatDateYearMonthDay, formatDateYearMonthDayHourse } from '../../utils';
 
 
 
 	const userInfo = getUserStorage()
 
-	type tasksStatus = {
-		index : number;
-		name : string;
-		css : string;
-		level:string;
+
+	// 所有任务
+	const tasks = ref<Task[]>([])
+
+	// 待办任务：进行中 + 已取消
+	const taskDoIng = computed(() => {
+		return [...tasks.value]
+			.filter(item => item.status != "已完成")
+			.sort((a, b) => {
+				// 进行中的任务永远在前
+				if (a.status == "进行中" && b.status == "已取消") {
+					return -1
+				}
+
+				if (a.status == "已取消" && b.status == "进行中") {
+					return 1
+				}
+
+				// 同一状态按照截止时间升序
+				return a.dueTime - b.dueTime
+			})
+	})
+
+	// 已完成任务
+	const completedTasks = computed(() => {
+		return tasks.value.filter(item => item.status == "已完成")
+	})
+	// 获取任务待办
+	const getTasks = async () => {
+		const res = await getTaskList()
+		if (!res || !res?.data) return
+		tasks.value = res?.data
 	}
+	// 计算优先级
+	const proiorityStr = (task : Task) => {
+		const now = new Date()
+		const dueDate = new Date(task.dueTime * 1000)
 
-	const taskStatus = reactive<tasksStatus[]>([
-		{
-			index: 0,
-			name: '进行中',
-			css: 'level-1',
-			level:'高优先级'
-		},
-		{
-			index: 1,
-			name: '已完成',
-			css: 'level-2',
-			level:'中优先级'
-		},
-		{
-			index: 2,
-			name: '已取消',
-			css: 'level-3',
-			level:'低优先级'
+		// 去掉时分秒，只比较年月日
+		const today = new Date(
+			now.getFullYear(),
+			now.getMonth(),
+			now.getDate()
+		)
+
+		const due = new Date(
+			dueDate.getFullYear(),
+			dueDate.getMonth(),
+			dueDate.getDate()
+		)
+
+		const diffDays = Math.floor(
+			(due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+		)
+
+		if (diffDays == 0) {
+			return "高优先级"
+		} else if (diffDays <= 2) {
+			return "中优先级"
+		} else {
+			return "低优先级"
 		}
-	])
-	const activeIndex = ref(0)
+	}
+	// 根据优先级动态绑定样式
+	const priorityClass = (task : Task) => {
+		const priority = proiorityStr(task)
 
-	const changeSel = (val : number){
-		activeIndex.value = val
-		// 根据状态查询对应的任务
+		switch (priority) {
+			case "高优先级":
+				return "tag-high"
+			case "中优先级":
+				return "tag-mid"
+			default:
+				return "tag-low"
+		}
 	}
 
 	const activeStyle = {
@@ -44,18 +90,13 @@ import { getUserStorage } from '../../storage';
 		backgroundColor: '#0050cb',
 		fontWeight: 'bold'
 	};
-	type addTaskDTO = {
-		title : string;// 标题
-		description : string;// 描述
-		priority : string;// 优先级
-		dueTime : number;// 截至时间
-	}
+
 
 	// 添加任务的dto
-	const tasksData = ref<addTaskDTO>({
+	const tasksData = ref<saveTaskDTO>({
+		id: 0,
 		title: '',
-		description: '',
-		priority: '1',   // 或 1, 2, 3 等
+		description: '', // 或 1, 2, 3 等
 		dueTime: 0         // 或 null, 或当前时间
 	});
 	// 截至日期
@@ -65,16 +106,8 @@ import { getUserStorage } from '../../storage';
 	// 是否显示弹层组件
 	const containerShow = ref(false)
 
-	// 编辑任务
-	const editTasks = () => {
-		// 点击编辑触发弹层
-		containerShow.value = true;
-	}
-	// 优先级单选框触发
-	// 监听 radio-group 的变化
-	const onPriorityChange = (event : UniRadioGroupChangeEvent) => {
-		tasksData.value.priority = (event.detail.value)
-	};
+
+
 	// 计算日期选择器的开始时间 和结束时间
 	const startDateTime = computed(() => {
 		const now = new Date();
@@ -97,6 +130,7 @@ import { getUserStorage } from '../../storage';
 	const onAfterLeave = () => {
 		console.log('进来了')
 	}
+
 	const closeContainer = () => {
 		// 判断是否有数据
 		if (!tasksData.value.title) {
@@ -113,13 +147,7 @@ import { getUserStorage } from '../../storage';
 			})
 			return
 		}
-		if (!tasksData.value.priority) {
-			uni.showToast({
-				title: '级别必须填写',
-				icon: 'error'
-			})
-			return
-		}
+
 		if (!startDay.value || !startTime.value) {
 			uni.showToast({
 				title: '截止时间必须填写',
@@ -128,20 +156,12 @@ import { getUserStorage } from '../../storage';
 			return
 		}
 
-		// 截止时间转换成时间戳格式
-		let data = startDay.value + 'T' + startTime.value
-		tasksData.value.dueTime = new Date(data).getTime() / 1000
-		console.log(tasksData.value)
-
+		tasksData.value.dueTime = dateTimeToTimestamp(startDay.value,startTime.value)
 		// 发送请求
+		// 判断是否有id发送不同的请求
 
 		// 清空表单
-		tasksData.value = {
-			title: '',
-			description: '',
-			priority: '1',   // 或 1, 2, 3 等
-			dueTime: 0
-		}
+
 		// 关闭弹层
 		containerShow.value = false
 	}
@@ -149,6 +169,57 @@ import { getUserStorage } from '../../storage';
 	const clickOver = () => {
 		containerShow.value = false
 	}
+
+
+	const currentTab = ref(0); // 0: 进行中, 1: 已完成
+	const flag = ref('')
+	const onAddTask = (type : "add" | "edit", task : Task | null) => {
+		// 触发添加任务弹层逻辑
+		containerShow.value = true
+		if (type == 'add') {
+			console.log('新增任务')
+			flag.value = '新增任务'
+			// 清空表单
+			tasksData.value = {
+				id:0,
+				title:'',
+				description:'',
+				dueTime:0
+			}
+			startDay.value = ''
+			startTime.value = ''
+			return
+		}
+
+		if (type == 'edit') {
+			flag.value = '修改任务'
+			if (task == null) return
+			// console.log(task?.id)
+			tasksData.value.id = task.id
+			tasksData.value.title = task.title
+			tasksData.value.description = task.description
+			tasksData.value.dueTime = task.dueTime
+
+			// 给日期选择器年月日，赋值年月日
+			startDay.value = formatDateYearMonthDay(tasksData.value.dueTime)
+
+			// 给日期选择器时分，赋值时分
+			const now = new Date(tasksData.value.dueTime * 1000)
+
+			const hour =now.getHours().toString().padStart(2, '0')
+			const minute = now.getMinutes().toString().padStart(2, '0')
+
+			const time = `${hour}:${minute}`
+			startTime.value = time
+
+
+			return
+		}
+	};
+
+	onShow(() => {
+		getTasks()
+	})
 </script>
 <template>
 	<view class="container">
@@ -169,29 +240,80 @@ import { getUserStorage } from '../../storage';
 		<!-- 任务列表 -->
 		<scroll-view
 			style="  height: 88%; box-sizing: border-box; width: 90%; margin-left: 5%; margin-right: 5%;margin-top: 20px;">
-			<!-- 任务选项 -->
-			<view
-				style=" border-bottom:1px #e0e3e5 solid; display: flex;flex-direction: row; align-items: center; height: 7%;box-sizing: border-box;">
-				<text @click="changeSel(item.index)" v-for="(item) in taskStatus" class="mr-15 task-sel fts-12"
-					:key="item.index" :style="activeIndex == item.index ? activeStyle : ''">
-					{{item.name}}
-				</text>
+
+			<!-- 1. 状态切换 Tab (进行中 / 已完成) -->
+			<view class="tab-header">
+				<view class="tab-item" :class="{ 'active': currentTab == 0 }" @click="currentTab = 0">
+					<text class="tab-text" :class="{ 'active-text': currentTab == 0 }">进行中</text>
+					<view v-if="currentTab == 0" class="active-line"></view>
+				</view>
+				<view class="tab-item" :class="{ 'active': currentTab == 1 }" @click="currentTab = 1">
+					<text class="tab-text" :class="{ 'active-text': currentTab == 1 }">已完成</text>
+					<view v-if="currentTab == 1" class="active-line"></view>
+				</view>
 			</view>
-			<view v-for="it in taskStatus">
-				<view v-if="activeIndex == it.index">
-					<!-- 任务列表 -->
-					<view v-for="item in 50" class="flex-space-between tasks-item" @click="editTasks">
-						<view>
-							<text class="fts-16">完成季度财务报表</text>
-							<text class="fts-12" style="color: #7b87a0;">2026-1-4 15:30 - 2026-2-4 15:30</text>
+
+			<!-- 2. 添加新任务入口 (虚线边框卡片) -->
+			<view v-if="currentTab == 0" class="add-task-entry" @click="onAddTask('add',null)">
+				<view class="add-icon-box">
+					<text class="add-plus-icon"></text>
+				</view>
+				<text class="add-placeholder-text">添加新任务...</text>
+			</view>
+
+			<!-- 3. 任务列表容器 -->
+			<view class="todo-list-container">
+				<!-- 进行中列表 -->
+				<view v-if="currentTab == 0" class="task-group">
+					<!-- 任务项: 高优先级 -->
+					<view v-for="item in taskDoIng " :key="item.id">
+						<view class="todo-item" v-if="item.status=='进行中'" @click="onAddTask('edit',item)">
+							<view class="todo-content">
+								<text class="todo-title">{{item.title}}</text>
+								<text class="todo-time">截止日期{{formatDateYearMonthDayHourse(item.dueTime)}}</text>
+							</view>
+
+							<view :class="['priority-tag', priorityClass(item)]">
+								<text :class="[
+									'tag-text',
+									priorityClass(item).replace('tag-', 'text-')
+								]">
+									{{ proiorityStr(item) }}
+								</text>
+							</view>
 						</view>
-						<view class="tasks-item-right">
-							<text class="fts-12 level" :class="it.css">{{it.level}}</text>
+						<view class="todo-item" v-else>
+							<view class="todo-content">
+								<text class="todo-title text-gray">{{item.title}}</text>
+								<text
+									class="todo-time  text-gray">截止日期{{formatDateYearMonthDayHourse(item.dueTime)}}</text>
+							</view>
+
+							<view class="tag-cancel priority-tag">
+								<text class="text-cancel">
+									{{item.status}}
+								</text>
+							</view>
+
+						</view>
+
+					</view>
+				</view>
+
+				<!-- 已完成列表 -->
+				<view v-if="currentTab == 1" class="task-group">
+					<view class="todo-item completed-item" v-for="(item, index) in completedTasks" :key="index">
+						<view class="todo-content">
+							<text class="todo-title text-gray">{{item.title}}</text>
+							<text class="todo-time">完成时间-{{formatBillDate(item.completedTime as number)}}</text>
+						</view>
+						<view class="check-icon-box">
+							<image style="width: 20px;height: 20px;" src="/static/image/task/completed.png" mode="">
+							</image>
 						</view>
 					</view>
 				</view>
 			</view>
-
 		</scroll-view>
 		<page-container :show="containerShow" @clickoverlay="clickOver" position="bottom" round overlay
 			@afterenter="onAfterLeave">
@@ -201,7 +323,7 @@ import { getUserStorage } from '../../storage';
 
 				<!-- 标题区域 -->
 				<view class="modal-header">
-					<text class="modal-title">新建任务</text>
+					<text class="modal-title">{{flag}}</text>
 				</view>
 
 				<scroll-view class="modal-body" scroll-y="true">
@@ -219,41 +341,6 @@ import { getUserStorage } from '../../storage';
 							placeholder-style="color: #999;"></textarea>
 					</view>
 
-					<!-- 优先级选择 (Radio Group 深度定制版) -->
-					<view class="form-item">
-						<text class="form-label">优先级</text>
-						<radio-group class="priority-radio-group" @change="onPriorityChange">
-							<!-- 低优先级 -->
-							<view class="priority-label low" @click="tasksData.priority = '1'"
-								:class="{ active_low: tasksData.priority === '1' }">
-								<view class="radio-box">
-									<radio value="1" :checked="tasksData.priority === '1'" color=" #757575"
-										style="transform:scale(0.8)" />
-								</view>
-								<text class="priority-text text-low">低</text>
-							</view>
-
-							<!-- 中优先级 (默认选中) -->
-							<view class="priority-label mid " @click="tasksData.priority = '2'"
-								:class="{ active_mid: tasksData.priority === '2' }">
-								<view class="radio-box">
-									<radio value="2" :checked="tasksData.priority === '2'" color=" #0066ff"
-										style="transform:scale(0.8)" />
-								</view>
-								<text class="priority-text text-mid">中</text>
-							</view>
-
-							<!-- 高优先级 -->
-							<view class="priority-label high" @click="tasksData.priority = '3'"
-								:class="{ active_high: tasksData.priority === '3' }">
-								<view class="radio-box">
-									<radio value="3" :checked="tasksData.priority === '3'" color=" #d32f2f"
-										style="transform:scale(0.8)" />
-								</view>
-								<text class="priority-text text-high">高</text>
-							</view>
-						</radio-group>
-					</view>
 
 					<!-- 截止日期 -->
 					<view class="form-item">
@@ -284,7 +371,7 @@ import { getUserStorage } from '../../storage';
 
 					<!-- 操作按钮 -->
 					<view class="action-area">
-						<button style="margin-top: 20px;" @click="closeContainer" type="primary">添加任务</button>
+						<button style="margin-top: 20px;" @click="closeContainer" type="primary">{{flag}}任务</button>
 					</view>
 
 					<!-- 底部安全区域占位 -->
@@ -298,40 +385,6 @@ import { getUserStorage } from '../../storage';
 
 
 <style scoped>
-	.level-1 {
-		background-color: #FFEBEB;
-		color: #D32F2F;
-	}
-
-	.level-2 {
-		background-color: #E3F2FD;
-		color: #1976D2;
-	}
-
-	.level-3 {
-
-		background-color: #F5F5F5;
-		color: #757575;
-	}
-
-	.level {
-		box-sizing: border-box;
-		padding: 3px 8px;
-		border-radius: 50%;
-	}
-
-	.tasks-item {
-		border-bottom: 1px #e0e3e5 solid;
-		box-sizing: border-box;
-		padding: 10px;
-	}
-
-	.tasks-item-right {
-		display: flex;
-		flex-direction: row;
-		align-items: center;
-	}
-
 	.container {
 		background-color: #f9f9ff;
 		height: 100%;
@@ -365,10 +418,6 @@ import { getUserStorage } from '../../storage';
 		justify-content: center;
 	}
 
-	.task-sel {
-		padding: 5 10 5 10;
-		border-radius: 50%;
-	}
 
 	.modal-content {
 		background-color: #ffffff;
@@ -436,83 +485,6 @@ import { getUserStorage } from '../../storage';
 		width: 100%;
 	}
 
-	/* Radio Group 核心样式对齐 */
-	.priority-radio-group {
-		flex-direction: row;
-		justify-content: space-between;
-	}
-
-	.priority-label {
-		flex: 1;
-		height: 54px;
-		flex-direction: row;
-		align-items: center;
-		justify-content: center;
-		border-radius: 12px;
-		margin: 0 6px;
-		transition: all 0.2s;
-	}
-
-	.priority-label:first-child {
-		margin-left: 0;
-	}
-
-	.priority-label:last-child {
-		margin-right: 0;
-	}
-
-	.radio-box {
-		margin-right: 4px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.priority-text {
-		font-size: 15px;
-		font-weight: 600;
-	}
-
-	/* 优先级状态色 - 未选中状态 */
-	.low {
-		background-color: #f5f5f5;
-	}
-
-	.mid {
-		background-color: #f5f5f5;
-	}
-
-	.high {
-		background-color: #f5f5f5;
-	}
-
-	/* 优先级状态色 - 激活状态 (您可以根据逻辑动态绑定这些类名) */
-	.active_low {
-		background-color: #f5f5f5;
-		border: 1px solid #757575;
-	}
-
-	.active_mid {
-		background-color: #eef2ff;
-		border: 1px solid #0066ff;
-	}
-
-	.active_high {
-		background-color: #ffebeb;
-		border: 1px solid #d32f2f;
-	}
-
-	.text-low {
-		color: #757575;
-	}
-
-	.text-mid {
-		color: #0066ff;
-	}
-
-	.text-high {
-		color: #d32f2f;
-	}
 
 	/* 日期选择器 */
 	.date-picker-trigger {
@@ -550,15 +522,167 @@ import { getUserStorage } from '../../storage';
 		padding-bottom: 20px;
 	}
 
-	.btn-submit {
-		height: 54px;
-		background-color: #0066ff;
-		color: #ffffff;
-		border-radius: 12px;
-		font-size: 16px;
-		font-weight: bold;
-		display: flex;
+	/* 任务列表 */
+	/* 状态切换栏 */
+	.tab-header {
+		flex-direction: row;
+		margin-bottom: 24px;
+		border-bottom: 1px solid #f0f3ff;
+	}
+
+	.tab-item {
+		padding: 12px 0;
+		margin-right: 32px;
+		position: relative;
 		align-items: center;
 		justify-content: center;
+	}
+
+	.tab-text {
+		font-size: 16px;
+		color: #7b87a0;
+		font-weight: 500;
+	}
+
+	.active-text {
+		color: #1a1a1a;
+		font-weight: bold;
+	}
+
+	.active-line {
+		position: absolute;
+		bottom: 0;
+		width: 20px;
+		height: 3px;
+		background-color: #0066ff;
+		border-radius: 2px;
+	}
+
+	/* 添加任务入口 (虚线卡片) */
+	.add-task-entry {
+		flex-direction: row;
+		align-items: center;
+		padding: 18px;
+		background-color: #f9faff;
+		border: 1px dashed #cfdaf2;
+		border-radius: 16px;
+		margin-bottom: 24px;
+	}
+
+	.add-icon-box {
+		width: 24px;
+		height: 24px;
+		background-color: #0066ff;
+		border-radius: 12px;
+		align-items: center;
+		justify-content: center;
+		margin-right: 12px;
+	}
+
+	.add-plus-icon {
+		color: #ffffff;
+		font-size: 14px;
+		font-weight: bold;
+	}
+
+	.add-placeholder-text {
+		font-size: 15px;
+		color: #7b87a0;
+	}
+
+	/* 任务列表 */
+	.todo-list-container {
+		flex-direction: column;
+	}
+
+	.todo-item {
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+		padding: 16px 0;
+		border-bottom: 1px solid #f0f3ff;
+	}
+
+	.no-border {
+		border-bottom: none;
+	}
+
+	.todo-content {
+		flex-direction: column;
+		flex: 1;
+	}
+
+	.todo-title {
+		font-size: 16px;
+		font-weight: 500;
+		color: #1a1a1a;
+		margin-bottom: 4px;
+	}
+
+	.todo-time {
+		font-size: 13px;
+		color: #7b87a0;
+	}
+
+	/* 优先级标签 */
+	.priority-tag {
+		padding: 4px 10px;
+		border-radius: 6px;
+		justify-content: center;
+		align-items: center;
+	}
+
+	/* 已取消 */
+	.tag-cancel {
+		background-color: #eeeeee;
+	}
+
+	.text-cancel {
+		color: #9e9e9e;
+		font-size: 11px;
+		font-weight: bold;
+	}
+
+	/* 高优先级 */
+	.tag-high {
+		background-color: #ffebeb;
+	}
+
+	.text-high {
+		color: #d32f2f;
+		font-size: 11px;
+		font-weight: bold;
+	}
+
+	/* 中优先级 */
+	.tag-mid {
+		background-color: #eef2ff;
+	}
+
+	.text-mid {
+		color: #0066ff;
+		font-size: 11px;
+		font-weight: bold;
+	}
+
+	/* 低优先级 */
+	.tag-low {
+		background-color: #f3f6fa;
+	}
+
+	.text-low {
+		color: #7b87a0;
+		font-size: 11px;
+		font-weight: bold;
+	}
+
+	/* 已完成样式 */
+	.text-gray {
+		color: #999;
+	}
+
+	.check-icon-box {
+		width: 20px;
+		height: 20px;
 	}
 </style>

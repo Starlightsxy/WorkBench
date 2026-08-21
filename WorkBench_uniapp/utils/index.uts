@@ -71,15 +71,15 @@ export const formatDateYearMonthDay = (timestamp : number) => {
 }
 // 根据传入的秒级时间戳计算时间 年月日
 export const formatDateYearMonthDayHourse = (timestamp : number) => {
-		const date = new Date(timestamp * 1000)
+	const date = new Date(timestamp * 1000)
 
-		const year = date.getFullYear()
-		const month = (date.getMonth() + 1).toString().padStart(2, '0')
-		const day = date.getDate().toString().padStart(2, '0')
-		const hour = date.getHours().toString().padStart(2, '0')
-		const minute = date.getMinutes().toString().padStart(2, '0')
+	const year = date.getFullYear()
+	const month = (date.getMonth() + 1).toString().padStart(2, '0')
+	const day = date.getDate().toString().padStart(2, '0')
+	const hour = date.getHours().toString().padStart(2, '0')
+	const minute = date.getMinutes().toString().padStart(2, '0')
 
-		return `${year}-${month}-${day} ${hour}:${minute}`
+	return `${year}-${month}-${day} ${hour}:${minute}`
 }
 
 /**
@@ -95,7 +95,7 @@ export const formatAmount = (amount : number) : string => {
 }
 
 // 根据账单类型计算 当日收入/支出，或最近收入/支出
-export const amountByTypeAndDateRange = (bills : Bill[], type : string, dateRange : 'today' | 'recent')  => {
+export const amountByTypeAndDateRange = (bills : Bill[], type : string, dateRange : 'today' | 'recent') => {
 	const now = new Date()
 	const curToday = now.getFullYear() + "-" + (now.getMonth() + 1) + "-" + now.getDate()
 	if (dateRange == 'today') {
@@ -107,8 +107,35 @@ export const amountByTypeAndDateRange = (bills : Bill[], type : string, dateRang
 		return formatAmount(bills// 每三位数加逗号，和末尾两个零
 			.filter(i => i.type == type) // 筛选 收入或支出
 			.reduce((sum, bill) => sum + (bill.amount), 0)) // 最近累计收入/支出
-	}else{
+	} else {
 		return ""
 	}
 
+}
+// 日期 + 时间转换成秒级时间戳
+// 日期 + 时间转换成秒级时间戳
+export const dateTimeToTimestamp = (
+	dateStr : string,
+	timeStr : string
+) : number => {
+	const dateParts = dateStr.split('-')
+	const timeParts = timeStr.split(':')
+
+	const year = parseInt(dateParts[0])
+	const month = parseInt(dateParts[1])
+	const day = parseInt(dateParts[2])
+
+	const hour = parseInt(timeParts[0])
+	const minute = parseInt(timeParts[1])
+
+	// 使用 ISO 标准格式，并补齐月份和日期
+	const monthStr = month < 10 ? '0' + month : '' + month
+	const dayStr = day < 10 ? '0' + day : '' + day
+	const timeStrFormat = hour < 10
+		? '0' + hour + ':' + (minute < 10 ? '0' + minute : '' + minute)
+		: '' + hour + ':' + (minute < 10 ? '0' + minute : '' + minute)
+
+	const dateTimeStr = year + '-' + monthStr + '-' + dayStr + 'T' + timeStrFormat
+
+	return Math.floor(new Date(dateTimeStr).getTime() / 1000)
 }

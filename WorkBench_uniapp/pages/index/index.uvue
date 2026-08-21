@@ -392,7 +392,7 @@
 					<!-- 账单列表项示例 -->
 					<view class="bill-list-content">
 						<!-- 循环项 -->
-						<view class="bill-list-item" v-for="(bill,index) in bills" :key="index">
+						<view class="bill-list-item" v-for="bill in bills" :key="bill.id">
 							<view class="item-left-side">
 								<view class="item-type-icon-bg">
 									<!-- 这里的路径您可以根据分类动态展示，暂时使用您提供的默认路径 -->
