@@ -20,9 +20,9 @@ import java.util.List;
 @Mapper
 public interface TasksMapper extends BaseMapper<Tasks> {
     /**
-     *
+     * 获取任务集合
      * @param userId 根据用户 id 查询任务待办
-     * @return
+     * @return 返回任务集合
      */
     @Select("select title," +
             "       description," +
@@ -38,7 +38,7 @@ public interface TasksMapper extends BaseMapper<Tasks> {
             "           WHEN 3 THEN '高'" +
             "           ELSE '未知'" +
             "           END AS priority," +
-            "       due_time," +
+            "       due_time , " +
             "       completed_time," +
             "       create_time," +
             "       update_time" +

@@ -22,10 +22,11 @@ public final class JwtUtil {
     // 密钥
     private static final String SECRET_KEY = "workbench-jwt-secret-key-workbench";
     // accessToken 有效期
-    private static final long ACCESS_EXPIRE_TIME = 10 * 60 * 1000L;       // 10分钟
+    private static final long ACCESS_EXPIRE_TIME = 5 * 60 * 1000L;       // 5分钟
 //    private static final long ACCESS_EXPIRE_TIME = 30 * 1000L; // 30秒 = 30000毫秒
     // refreshToken 有效期
     private static final long REFRESH_EXPIRE_TIME = 7 * 24 * 60 * 60 * 1000L; // 7天
+//    private static final long REFRESH_EXPIRE_TIME = 30 * 1000L; // 30秒 = 30000毫秒
 
     public static long getRefreshExpireTime() {
         return REFRESH_EXPIRE_TIME;

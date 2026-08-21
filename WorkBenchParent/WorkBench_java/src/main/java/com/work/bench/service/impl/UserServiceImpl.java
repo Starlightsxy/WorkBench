@@ -177,8 +177,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String refreshToken = refreshTokenDTO.getRefreshToken();
         // 解析 refreshToken
         Claims claims = jwtUtil.validateToken(refreshToken);
+        // 代表过期
         if (claims == null) {
-            throw new BusinessException("无效的Refresh Token");
+            throw new BusinessException("RefreshToken 过期或禁用，需要重新登录");
         }
         // 判断 token 类型
         String type = claims.get("type", String.class);
