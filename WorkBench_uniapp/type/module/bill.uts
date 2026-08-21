@@ -1,11 +1,44 @@
 export type Bill = {
-	id:number;
+	id : number;
 	billDate : number | string;
 	type : string;
 	amount : number;
 	remark : string;
 	categoryName : string;
 	accountName : string;
+	accountIcon : string;
 	balance : number;
-	icon : string;
+	categoryIcon : string;
+}
+
+// bill 收支
+type BillExpIncDTO = {
+	expense : number;
+	income : number;
+}
+
+// plan 预算和收入目标
+type BillPlanDTO = {
+	budget : number;
+	incomeGoal : number;
+}
+
+// 整合
+type BillStatisticsVO = {
+	billExpIncDTO : BillExpIncDTO;
+	billPlanDTO : BillPlanDTO;
+}
+
+export type BillPageVO = {
+	totalAsset : number;
+	month : BillStatisticsVO;// 月度收支 预算和收入目标
+	year : BillStatisticsVO; // 年度收支 预算和收入目标
+	records : Bill[]; // 账单列表
+	total : number; // 账单数量
+
+}
+
+export type BillGroup = {
+	date: string;
+	bills: Bill[];
 }

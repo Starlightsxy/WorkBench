@@ -1,11 +1,13 @@
 import { getAccessTokenStorage } from "../../storage"
-import { ApiResponse, Bill } from "../../type"
+import { ApiResponse, Bill, BillPageVO } from "../../type"
 
-
-export const getBillList = () : Promise<ApiResponse<Bill[]> | null> => {
+/**
+ * 获取最近几条账单
+ */
+export const getBillRecent = () : Promise<ApiResponse<Bill[]> | null> => {
 	return new Promise((resolve) => {
 		uni.request<ApiResponse<Bill[]>>({
-			url: "http://192.168.146.254:3000/bill/bills",
+			url: "http://192.168.146.254:3000/bill/recent",
 			method: "GET",
 			header: {
 				Authorization: "Bearer " + getAccessTokenStorage()
@@ -13,6 +15,35 @@ export const getBillList = () : Promise<ApiResponse<Bill[]> | null> => {
 			timeout: 5000,
 
 			success: (e : RequestSuccess<ApiResponse<Bill[]>>) => {
+				resolve(e.data)
+			},
+
+			fail: (e) => {
+				uni.showToast({
+					title: e.errMsg,
+					icon: "error"
+				})
+
+				resolve(null)
+			}
+		})
+	})
+}
+
+/**
+ * 获取账单信息
+ */
+export const getBillOverview = () : Promise<ApiResponse<BillPageVO> | null> => {
+	return new Promise((resolve) => {
+		uni.request<ApiResponse<BillPageVO>>({
+			url: "http://192.168.146.254:3000/bill/overview",
+			method: "GET",
+			header: {
+				Authorization: "Bearer " + getAccessTokenStorage()
+			},
+			timeout: 5000,
+
+			success: (e : RequestSuccess<ApiResponse<BillPageVO>>) => {
 				resolve(e.data)
 			},
 

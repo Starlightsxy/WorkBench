@@ -113,7 +113,6 @@ export const amountByTypeAndDateRange = (bills : Bill[], type : string, dateRang
 
 }
 // 日期 + 时间转换成秒级时间戳
-// 日期 + 时间转换成秒级时间戳
 export const dateTimeToTimestamp = (
 	dateStr : string,
 	timeStr : string

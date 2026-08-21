@@ -1,17 +1,310 @@
-<template>
-	<!-- #ifdef APP -->
-	<scroll-view style="flex:1">
-	<!-- #endif -->
-		
-	<!-- #ifdef APP -->
-	</scroll-view>
-	<!-- #endif -->
-</template>
+<script setup lang="uts">
+	import { getBillOverview } from '../../api';
+	import { getUserStorage } from '../../storage';
+	import { BillGroup, BillPageVO } from '../../type';
+	import { formatAmount, formatBillDate, formatDateYearMonthDay } from '../../utils';
 
-<script setup>
-		
+
+	const userInfo = getUserStorage()
+
+
+	// 账单页
+	const billPageVO = ref<BillPageVO | null>(null)
+	// 获取账单
+	const getBillPage = async () => {
+		const res = await getBillOverview()
+		if (!res || !res?.data) return
+		billPageVO.value = res?.data
+	}
+
+	// 账单分组
+	const billGroups = computed<BillGroup[]>(() => {
+		const groups : BillGroup[] = []
+		// if (billPageVO.value?.records == null) return
+		if (billPageVO.value) {
+			for (const item of billPageVO.value.records) {
+				const date = formatBillDate(item.billDate as number)
+
+				let group = groups.find(i => i.date == (date as string))
+
+				if (group) {
+					group?.bills.push(item)
+				} else {
+					groups.push({
+						date: date,
+						bills: [item]
+					})
+				}
+			}
+		}
+
+
+		return groups
+	})
+	onShow(() => {
+		getBillPage()
+	})
+	onHide(() => {
+
+	})
 </script>
 
-<style>
-		
+<template>
+	<view class="container">
+		<!-- nav-bar -->
+		<view class="navbar">
+			<view class="flex-space-between">
+				<view class="flex-space-between">
+					<image class="nvbar-img" :src="userInfo?.avatar" mode=""></image>
+					<view class="pl-5 txt-nvbar">
+						<text style="font-size: 20px; font-weight: bold;color: #004fcb;">我的账单</text>
+					</view>
+				</view>
+				<view>
+					<image class="nvbar-img" src="/static/image/index/setting.png" mode=""></image>
+				</view>
+			</view>
+		</view>
+		<scroll-view direction="vertical" style="height: 92%; padding-bottom:20px; ">
+			<!-- 1. 总资产概览卡片 -->
+			<view class="card summary-card">
+				<text class="summary-label">总资产 (CNY)</text>
+				<text class="total-amount">¥{{formatAmount(billPageVO?.totalAsset as number)}}</text>
+
+				<view class="budget-row">
+					<view class="budget-col">
+						<text class="b-label">本月支出</text>
+						<text
+							class="b-value text-red">¥{{formatAmount(billPageVO?.month.billExpIncDTO.expense as number)}}</text>
+					</view>
+					<view class="budget-col">
+						<text class="b-label">本月预算</text>
+						<text class="b-value">¥{{formatAmount(billPageVO?.month.billPlanDTO.budget as number)}}</text>
+					</view>
+				</view>
+
+				<!-- 预算进度条 -->
+				<view class="budget-track">
+					<view class="budget-fill" style="width: 54%;"></view>
+				</view>
+				<text class="budget-hint">已用 54%</text>
+			</view>
+
+			<!-- 2. 日期分组：今天 -->
+			<view v-for="(item ,index) in billGroups" :key="index">
+				<text class="date-header">{{item.date}}</text>
+				<view class="card bill-list-card">
+					<!-- 账单项：午餐 -->
+					<view class="bill-item" v-for="i in item.bills">
+						<view class="item-left">
+							<view class="item-icon-bg">
+								<image class="item-icon" :src="i.categoryIcon" mode="aspectFit">
+								</image>
+							</view>
+							<view class="item-info">
+								<text class="item-name">{{i.categoryName}}</text>
+								<text class="item-desc">{{i.remark}} · {{i.accountName}}</text>
+							</view>
+						</view>
+						<text class="item-amount" :class="i.type == '收入' ? 'text-income' : 'text-expense'">
+							{{ i.type == "收入" ? "+" : "-" }}￥{{ formatAmount(i.amount) }}
+						</text>
+					</view>
+
+				</view>
+			</view>
+
+		</scroll-view>
+	</view>
+</template>
+
+
+
+<style scoped>
+	.container {
+		background-color: #f9f9ff;
+		height: 100%;
+		/* 或 100dvh */
+		padding-top: var(--status-bar-height);
+		/* 状态栏高度 */
+		box-sizing: border-box;
+		/* 确保 padding 包含在高度内 */
+
+	}
+
+	.navbar {
+		justify-content: center;
+		height: 8%;
+		width: 100%;
+		border-bottom: 1px #e0e3e5 solid;
+		/* 底部内边距，可调整数值 */
+		box-sizing: border-box;
+
+	}
+
+	.nvbar-img {
+		width: 44px;
+		height: 44px;
+		padding: 3px;
+		border-radius: 50%;
+
+	}
+
+	.txt-nvbar {
+		justify-content: center;
+	}
+
+
+
+
+	/* 通用卡片样式 */
+	.card {
+		background-color: #ffffff;
+		border-radius: 20px;
+		padding: 20px;
+		margin: 0 16px 16px;
+	}
+
+	/* 资产概览卡片 */
+	.summary-card {
+		padding: 24px;
+		margin-top: 10px;
+		box-shadow: 0 4px 16px rgba(0, 102, 255, 0.04);
+	}
+
+	.summary-label {
+		font-size: 14px;
+		color: #7b87a0;
+		margin-bottom: 8px;
+	}
+
+	.total-amount {
+		font-size: 32px;
+		font-weight: 700;
+		color: #1a1a1a;
+		margin-bottom: 24px;
+	}
+
+	.budget-row {
+		flex-direction: row;
+		margin-bottom: 12px;
+	}
+
+	.budget-col {
+		flex: 1;
+	}
+
+	.b-label {
+		font-size: 13px;
+		color: #7b87a0;
+		margin-bottom: 4px;
+	}
+
+	.b-value {
+		font-size: 17px;
+		font-weight: 700;
+		color: #1a1a1a;
+	}
+
+	.text-red {
+		color: #d32f2f;
+	}
+
+	.budget-track {
+		height: 8px;
+		background-color: #f0f3ff;
+		border-radius: 4px;
+		overflow: hidden;
+		margin-bottom: 8px;
+	}
+
+	.budget-fill {
+		height: 8px;
+		background-color: #0066ff;
+		border-radius: 4px;
+	}
+
+	.budget-hint {
+		font-size: 12px;
+		color: #7b87a0;
+		text-align: right;
+	}
+
+	/* 日期标题 */
+	.date-header {
+		padding: 0 20px 12px;
+		font-size: 14px;
+		font-weight: 500;
+		color: #1a1a1a;
+	}
+
+	/* 账单列表项 */
+	.bill-list-card {
+		padding: 0 16px;
+	}
+
+	.bill-item {
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+		padding: 16px 0;
+		border-bottom: 1px solid #f0f3ff;
+	}
+
+	.no-border {
+		border-bottom: none;
+	}
+
+	.item-left {
+		flex-direction: row;
+		align-items: center;
+	}
+
+	.item-icon-bg {
+		width: 44px;
+		height: 44px;
+		background-color: #f0f3ff;
+		border-radius: 12px;
+		justify-content: center;
+		align-items: center;
+		margin-right: 12px;
+	}
+
+	.income-bg {
+		background-color: #e8f5e9;
+	}
+
+	.item-icon {
+		width: 24px;
+		height: 24px;
+	}
+
+	.item-info {
+		flex-direction: column;
+	}
+
+	.item-name {
+		font-size: 16px;
+		font-weight: 500;
+		color: #1a1a1a;
+		margin-bottom: 2px;
+	}
+
+	.item-desc {
+		font-size: 12px;
+		color: #7b87a0;
+	}
+
+	.item-amount {
+		font-size: 17px;
+		font-weight: 700;
+	}
+
+	.text-expense {
+		color: #DC2626;
+	}
+
+	.text-income {
+		color: #16A34A;
+	}
 </style>

@@ -1,5 +1,5 @@
 <script setup lang="uts">
-	import { getAnniversaryList, getBillList, getTaskList, getUserInfo } from '../../api';
+	import { getAnniversaryList, getBillRecent, getTaskList, getUserInfo } from '../../api';
 	import { setUserStorage } from '../../storage';
 	import { Bill, UserInfoVO } from '../../type';
 	import { amountByTypeAndDateRange, formatAmount, formatBillDate } from '../../utils';
@@ -198,7 +198,7 @@
 	const bills = ref<Bill[]>([])
 	// 获取最近账单，只显示最近5条
 	const getBills = async () => {
-		const res = await getBillList()
+		const res = await getBillRecent()
 
 		if (!res || !res?.data) return
 
@@ -396,7 +396,7 @@
 							<view class="item-left-side">
 								<view class="item-type-icon-bg">
 									<!-- 这里的路径您可以根据分类动态展示，暂时使用您提供的默认路径 -->
-									<image class="item-type-icon" :src="bill.icon" mode="aspectFit"></image>
+									<image class="item-type-icon" :src="bill.categoryIcon" mode="aspectFit"></image>
 								</view>
 								<view class="item-info-stack">
 									<view style="display: flex;flex-direction: row; align-items: center;">
