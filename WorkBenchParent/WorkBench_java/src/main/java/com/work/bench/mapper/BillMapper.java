@@ -20,7 +20,7 @@ public interface BillMapper extends BaseMapper<Bill> {
      * @param userId 根据当前 userId 查询当前用户最近5条账单
      * @return 返回账单集合
      */
-    @Select(" select b.bill_date ," +
+    @Select(" select b.id, b.bill_date ," +
             "   CASE b.type " +
             "       when 1 then '收入' " +
             "       when 2 then '支出' " +

@@ -24,7 +24,7 @@ public interface TasksMapper extends BaseMapper<Tasks> {
      * @param userId 根据用户 id 查询任务待办
      * @return 返回任务集合
      */
-    @Select("select title," +
+    @Select("select id,title," +
             "       description," +
             "       CASE status" +
             "           WHEN 1 THEN '进行中'" +
@@ -32,16 +32,10 @@ public interface TasksMapper extends BaseMapper<Tasks> {
             "           WHEN 3 THEN '已取消'" +
             "           ELSE '未知'" +
             "           END AS status," +
-            "       CASE priority" +
-            "           WHEN 1 THEN '低'" +
-            "           WHEN 2 THEN '中'" +
-            "           WHEN 3 THEN '高'" +
-            "           ELSE '未知'" +
-            "           END AS priority," +
             "       due_time , " +
             "       completed_time," +
             "       create_time," +
             "       update_time" +
-            " from tb_tasks where deleted = 0 and user_id = #{userId}")
+            " from tb_tasks where deleted = 0 and user_id = #{userId} order by due_time ")
     List<TasksVO> selectTaskListByUserId(@Param("userId") Integer userId);
 }

@@ -13,6 +13,7 @@ import java.math.BigDecimal;
  */
 @Data
 public class BillVO {
+    private Integer id;
     /**
      * 支付时间
      */

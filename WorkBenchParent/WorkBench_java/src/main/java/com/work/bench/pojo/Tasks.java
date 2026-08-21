@@ -30,8 +30,6 @@ public class Tasks {
     private String description;
     //任务状态 1-进行中 2-完成 3-取消 默认1
     private Integer status;
-    // 任务级别 优先级 1-低 2-中 3-高 默认1
-    private Integer priority;
     // 截至时间
     private Long dueTime;
     // 实际完成时间
