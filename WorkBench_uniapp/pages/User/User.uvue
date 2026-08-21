@@ -1,17 +1,351 @@
-<template>
-	<!-- #ifdef APP -->
-	<scroll-view style="flex:1">
-	<!-- #endif -->
-		
-	<!-- #ifdef APP -->
-	</scroll-view>
-	<!-- #endif -->
-</template>
+<script setup lang="uts">
+	import { getUserStorage } from '../../storage';
 
-<script setup>
-		
+	const userInfo = getUserStorage()
+
+	onShow(() => {
+
+	})
+
+	onHide(() => {
+
+	})
 </script>
 
-<style>
-		
+<template>
+	<view class="container">
+		<!-- nav-bar -->
+		<view class="navbar">
+			<view class="flex-space-between">
+				<view class="flex-space-between">
+					<image class="nvbar-img" :src="userInfo?.avatar" mode=""></image>
+					<view class="pl-5 txt-nvbar">
+						<text style="font-size: 20px; font-weight: bold;color: #004fcb;">用户中心</text>
+					</view>
+				</view>
+				<view>
+					<image class="nvbar-img" src="/static/image/index/setting.png" mode=""></image>
+				</view>
+			</view>
+		</view>
+		<!-- welcome -->
+		<scroll-view direction="vertical" style="height: 92%; padding-bottom:20px; ">
+			<!-- 1. 个人信息核心区域 -->
+			<view class="profile-card">
+				<image class="main-avatar" :src="userInfo?.avatar" mode="aspectFill"></image>
+				<text class="user-name">{{userInfo?.nickName}}</text>
+				<text class="user-motto">保持冷静，继续前行。</text>
+			</view>
+
+			<!-- 2. 数据统计三宫格 (新增待办任务) -->
+			<view class="stats-container">
+				<view class="stats-card">
+					<view class="stats-icon-bg bg-blue">
+						<image class="stats-small-icon" src="/static/image/icon/bill.png" mode="aspectFit"></image>
+					</view>
+					<text class="stats-label">总账单数</text>
+					<text class="stats-value">1,204</text>
+				</view>
+
+				<view class="stats-card">
+					<view class="stats-icon-bg bg-purple">
+						<image class="stats-small-icon" src="/static/image/icon/anniversary.png" mode="aspectFit">
+						</image>
+					</view>
+					<text class="stats-label">总纪念日</text>
+					<text class="stats-value">36</text>
+				</view>
+
+				<view class="stats-card">
+					<view class="stats-icon-bg bg-orange">
+						<image class="stats-small-icon" src="/static/image/icon/tasks.png" mode="aspectFit"></image>
+					</view>
+					<text class="stats-label">待办任务</text>
+					<text class="stats-value">8</text>
+				</view>
+			</view>
+
+			<!-- 3. 功能列表 -->
+			<view class="menu-group">
+				<text class="menu-group-title">账户设置</text>
+				<view class="menu-list-card">
+					<view class="menu-item">
+						<view class="menu-left">
+							<text class="menu-icon">🛡️</text>
+							<text class="menu-text">账号安全</text>
+						</view>
+						<text class="menu-arrow">></text>
+					</view>
+
+					<view class="menu-item">
+						<view class="menu-left">
+							<text class="menu-icon">🌙</text>
+							<text class="menu-text">深色模式</text>
+						</view>
+						<!-- 简易开关样式 -->
+						<view class="switch-box">
+							<view class="switch-dot"></view>
+						</view>
+					</view>
+
+					<view class="menu-item no-border">
+						<view class="menu-left">
+							<text class="menu-icon">🔔</text>
+							<text class="menu-text">通知设置</text>
+						</view>
+						<text class="menu-arrow">></text>
+					</view>
+				</view>
+			</view>
+
+			<view class="menu-group">
+				<text class="menu-group-title">关于与帮助</text>
+				<view class="menu-list-card">
+					<view class="menu-item">
+						<view class="menu-left">
+							<text class="menu-icon">❓</text>
+							<text class="menu-text">帮助中心</text>
+						</view>
+						<text class="menu-arrow">></text>
+					</view>
+					<view class="menu-item no-border">
+						<view class="menu-left">
+							<text class="menu-icon">ℹ️</text>
+							<text class="menu-text">关于应用</text>
+						</view>
+						<view class="menu-right-info">
+							<text class="version-text">v1.0.0</text>
+							<text class="menu-arrow">></text>
+						</view>
+					</view>
+				</view>
+			</view>
+
+			<!-- 4. 退出登录按钮 -->
+			<view class="logout-btn-box">
+				<text class="logout-btn-text">退出登录</text>
+			</view>
+
+			<!-- 底部留白 -->
+			<view class="footer-spacer"></view>
+
+		</scroll-view>
+	</view>
+</template>
+
+
+<style scoped>
+	.container {
+		background-color: #f9f9ff;
+		height: 100%;
+		/* 或 100dvh */
+		padding-top: var(--status-bar-height);
+		/* 状态栏高度 */
+		box-sizing: border-box;
+		/* 确保 padding 包含在高度内 */
+
+	}
+
+	.navbar {
+		justify-content: center;
+		height: 8%;
+		width: 100%;
+		border-bottom: 1px #e0e3e5 solid;
+		/* 底部内边距，可调整数值 */
+		box-sizing: border-box;
+
+	}
+
+	.nvbar-img {
+		width: 44px;
+		height: 44px;
+		padding: 3px;
+		border-radius: 50%;
+
+	}
+
+	.txt-nvbar {
+		justify-content: center;
+	}
+
+	/* 个人信息卡片 */
+	.profile-card {
+		align-items: center;
+		padding: 40px 20px 24px;
+		background-color: #ffffff;
+		border-bottom-left-radius: 32px;
+		border-bottom-right-radius: 32px;
+		margin-bottom: 20px;
+	}
+
+	.main-avatar {
+		width: 100px;
+		height: 100px;
+		border-radius: 50px;
+		border: 4px solid #f0f3ff;
+		margin-bottom: 16px;
+	}
+
+	.user-name {
+		font-size: 22px;
+		font-weight: 800;
+		color: #1a1a1a;
+		margin-bottom: 6px;
+	}
+
+	.user-motto {
+		font-size: 13px;
+		color: #7b87a0;
+	}
+
+	/* 统计三宫格 */
+	.stats-container {
+		flex-direction: row;
+		padding: 0 16px;
+		margin-bottom: 24px;
+	}
+
+	.stats-card {
+		flex: 1;
+		background-color: #ffffff;
+		border-radius: 20px;
+		padding: 16px;
+		margin: 0 6px;
+		align-items: center;
+	}
+
+	.stats-icon-bg {
+		width: 36px;
+		height: 36px;
+		border-radius: 10px;
+		justify-content: center;
+		align-items: center;
+		margin-bottom: 10px;
+	}
+
+	.bg-blue {
+		background-color: #e3f2fd;
+	}
+
+	.bg-purple {
+		background-color: #f3e5f5;
+	}
+
+	.bg-orange {
+		background-color: #fff3e0;
+	}
+
+	.stats-small-icon {
+		width: 20px;
+		height: 20px;
+	}
+
+	.stats-label {
+		font-size: 11px;
+		color: #7b87a0;
+		margin-bottom: 4px;
+	}
+
+	.stats-value {
+		font-size: 18px;
+		font-weight: 700;
+		color: #1a1a1a;
+	}
+
+	/* 菜单分组 */
+	.menu-group {
+		padding: 0 16px;
+		margin-bottom: 20px;
+	}
+
+	.menu-group-title {
+		font-size: 13px;
+		font-weight: 700;
+		color: #7b87a0;
+		margin-bottom: 12px;
+		margin-left: 4px;
+	}
+
+	.menu-list-card {
+		background-color: #ffffff;
+		border-radius: 20px;
+		padding: 0 16px;
+	}
+
+	.menu-item {
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+		padding: 18px 0;
+		border-bottom: 1px solid #f0f3ff;
+	}
+
+	.no-border {
+		border-bottom: none;
+	}
+
+	.menu-left {
+		flex-direction: row;
+		align-items: center;
+	}
+
+	.menu-icon {
+		font-size: 18px;
+		margin-right: 12px;
+	}
+
+	.menu-text {
+		font-size: 15px;
+		color: #1a1a1a;
+		font-weight: 500;
+	}
+
+	.menu-arrow {
+		font-size: 14px;
+		color: #cfdaf2;
+	}
+
+	.menu-right-info {
+		flex-direction: row;
+		align-items: center;
+	}
+
+	.version-text {
+		font-size: 13px;
+		color: #7b87a0;
+		margin-right: 8px;
+	}
+
+	/* 简易开关 */
+	.switch-box {
+		width: 44px;
+		height: 24px;
+		background-color: #cfdaf2;
+		border-radius: 12px;
+		padding: 2px;
+		flex-direction: row;
+	}
+
+	.switch-dot {
+		width: 20px;
+		height: 20px;
+		background-color: #ffffff;
+		border-radius: 10px;
+	}
+
+	/* 退出登录 */
+	.logout-btn-box {
+		margin: 10px 16px 20px;
+		height: 54px;
+		background-color: #fff1f0;
+		border-radius: 16px;
+		justify-content: center;
+		align-items: center;
+	}
+
+	.logout-btn-text {
+		color: #f5222d;
+		font-size: 16px;
+		font-weight: 700;
+	}
 </style>
