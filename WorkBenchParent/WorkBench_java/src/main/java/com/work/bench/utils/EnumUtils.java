@@ -29,6 +29,24 @@ public final class EnumUtils {
     }
 
     /**
+     *
+     * @param enumClass
+     * @param desc
+     * @return
+     * @param <T>
+     */
+    public static <T extends BaseEnum> Integer getCodeByDesc(Class<T> enumClass, String desc) {
+        if (desc == null) {
+            return 0;
+        }
+        for (T item : enumClass.getEnumConstants()) {
+            if(item.getDesc().equals(desc)) {
+                return item.getCode();
+            }
+        }
+        return 0;
+    }
+    /**
      * 根据 code 获取枚举实例（若找不到返回 null）
      */
     public static <T extends BaseEnum> T getEnumByCode(Class<T> enumClass, Integer code) {

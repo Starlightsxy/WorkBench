@@ -1,6 +1,7 @@
 package com.work.bench.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.work.bench.dto.tasks.TasksDTO;
 import com.work.bench.pojo.Tasks;
 import com.work.bench.pojo.User;
 import com.work.bench.vo.tasks.TasksVO;
@@ -21,4 +22,11 @@ public interface TasksService extends IService<Tasks> {
      * @return 返回任务集合
      */
     List<TasksVO> getUserTasks(Integer userId);
+
+    /**
+     * 对任务进行修改，或完成或新增
+     * @param tasksDTO 任务实体类
+     * @return
+     */
+    boolean saveTask(TasksDTO tasksDTO);
 }

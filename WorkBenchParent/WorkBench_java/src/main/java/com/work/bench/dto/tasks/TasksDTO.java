@@ -22,7 +22,7 @@ public class TasksDTO {
     // 任务描述
     private String description;
     //任务状态 0-待办 1-进行中 2-完成 3-取消
-    private Integer status;
+    private String status;
     // 截至时间
     private Long dueTime;
     // 实际完成时间
