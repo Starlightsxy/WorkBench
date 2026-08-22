@@ -1,5 +1,5 @@
 import { getAccessTokenStorage } from "../../storage"
-import { ApiResponse, Task } from "../../type"
+import { ApiResponse, Task, saveTaskDTO } from "../../type"
 
 export const getTaskList = () : Promise<ApiResponse<Task[]> | null> => {
 	return new Promise((resolve) => {
@@ -16,6 +16,45 @@ export const getTaskList = () : Promise<ApiResponse<Task[]> | null> => {
 			},
 
 			fail: (e) => {
+				uni.showToast({
+					title: e.errMsg,
+					icon: "error"
+				})
+
+				resolve(null)
+			}
+		})
+	})
+}
+
+
+// 保存任务列表
+export const saveTask = (data : saveTaskDTO) : Promise<ApiResponse<string> | null> => {
+	const requestData = {
+	    id: data.id,
+	    title: data.title,
+		status:data.status,
+	    description: data.description,
+	    dueTime: data.dueTime,
+		deleted:data.deleted
+	}
+	return new Promise((resolve) => {
+		uni.request<ApiResponse<string>>({
+			url: "http://192.168.146.254:3000/tasks/save",
+			method: "POST",
+			data:requestData,
+			header: {
+				Authorization: "Bearer " + getAccessTokenStorage()
+			},
+			timeout: 5000,
+
+			success: (e : RequestSuccess<ApiResponse<string>>) => {
+
+				resolve(e.data)
+			},
+
+			fail: (e) => {
+				console.log(e)
 				uni.showToast({
 					title: e.errMsg,
 					icon: "error"

@@ -2,7 +2,7 @@
  * 待办任务
  */
 export type Task = {
-	id:number;
+	id : number;
 	title : string;
 	description : string;
 	status : string;
@@ -24,8 +24,11 @@ export type tasksStatus = {
  * 保存任务dto
  */
 export type saveTaskDTO = {
-	id:number,
+	id : number,
 	title : string;// 标题
 	description : string;// 描述
 	dueTime : number;// 截至时间
+	status : string ;// 状态
+	deleted:number ;// 是否删除
+
 }

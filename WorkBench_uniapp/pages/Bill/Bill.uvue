@@ -1,7 +1,7 @@
 <script setup lang="uts">
 	import { getBillOverview } from '../../api';
 	import { getUserStorage } from '../../storage';
-	import { BillGroup, BillPageVO } from '../../type';
+	import { BillGroup, BillPageVO, YearMonthBillVO } from '../../type';
 	import { formatAmount, formatBillDate, formatDateYearMonthDay } from '../../utils';
 
 
@@ -10,6 +10,8 @@
 
 	// 账单页
 	const billPageVO = ref<BillPageVO | null>(null)
+
+
 	// 获取账单
 	const getBillPage = async () => {
 		const res = await getBillOverview()
@@ -41,8 +43,89 @@
 
 		return groups
 	})
-	onShow(() => {
-		getBillPage()
+
+	const yearBill = ref<YearMonthBillVO>({
+		targetIncome: 0,
+		actualIncome: 0,
+		expenseBudget: 0,
+		actualExpense: 0,
+	})
+	const monthBill = ref<YearMonthBillVO>({
+		targetIncome: 0,
+		actualIncome: 0,
+		expenseBudget: 0,
+		actualExpense: 0,
+	})
+	const calcYearMonthBill = (type : 'year' | 'month') => {
+		if (billPageVO.value != null) {
+			if (type == 'year') {
+				yearBill.value.targetIncome = billPageVO.value.year.billPlanDTO.incomeGoal
+				yearBill.value.actualIncome = billPageVO.value.year.billExpIncDTO.income
+				yearBill.value.expenseBudget = billPageVO.value.year.billPlanDTO.budget
+				yearBill.value.actualExpense = billPageVO.value.year.billExpIncDTO.expense
+			} else if (type == 'month') {
+				monthBill.value.targetIncome = billPageVO.value.month.billPlanDTO.incomeGoal
+				monthBill.value.actualIncome = billPageVO.value.month.billExpIncDTO.income
+				monthBill.value.expenseBudget = billPageVO.value.month.billPlanDTO.budget
+				monthBill.value.actualExpense = billPageVO.value.month.billExpIncDTO.expense
+			} else {
+				console.log('')
+			}
+		}
+
+
+	}
+
+	// 月收入百分比
+	const monthIncomePercentage = computed(() => {
+		if (monthBill.value.targetIncome <= 0) {
+			return 0
+		}
+
+
+		return (monthBill.value.actualIncome / monthBill.value.targetIncome) * 100
+	})
+	// 月支出百分比
+	const monthExpensePercentage = computed(() => {
+		if (monthBill.value.expenseBudget <= 0) {
+			return 0
+		}
+
+		return (monthBill.value.actualExpense / monthBill.value.expenseBudget) * 100
+	})
+	// 年收入百分比
+	const yeaerIncomePercentage = computed(() => {
+		if (yearBill.value.targetIncome <= 0) {
+			return 0
+		}
+
+
+		return (yearBill.value.actualIncome / yearBill.value.targetIncome) * 100
+	})
+	// 年支出百分比
+	const yearExpensePercentage = computed(() => {
+		if (yearBill.value.expenseBudget <= 0) {
+			return 0
+		}
+
+		return (yearBill.value.actualExpense / yearBill.value.expenseBudget) * 100
+	})
+
+	// 百分比
+	const progress = ref<number[]>([])
+	const loadProgress = () => {
+		for (var i = 0; i <= 100; i++) {
+			progress.value.push(i)
+		}
+	}
+	const addBill = () => {
+		console.log("添加账单")
+	}
+	onShow(async () => {
+		await getBillPage()
+		loadProgress()
+		calcYearMonthBill('year')
+		calcYearMonthBill('month')
 	})
 	onHide(() => {
 
@@ -65,29 +148,127 @@
 				</view>
 			</view>
 		</view>
-		<scroll-view direction="vertical" style="height: 92%; padding-bottom:20px; ">
-			<!-- 1. 总资产概览卡片 -->
-			<view class="card summary-card">
-				<text class="summary-label">总资产 (CNY)</text>
-				<text class="total-amount">¥{{formatAmount(billPageVO?.totalAsset as number)}}</text>
+		<scroll-view direction="vertical" style="height: 92%; padding-bottom:20px; position:relative;">
+			<!-- 添加账单按钮 -->
 
-				<view class="budget-row">
-					<view class="budget-col">
-						<text class="b-label">本月支出</text>
-						<text
-							class="b-value text-red">¥{{formatAmount(billPageVO?.month.billExpIncDTO.expense as number)}}</text>
-					</view>
-					<view class="budget-col">
-						<text class="b-label">本月预算</text>
-						<text class="b-value">¥{{formatAmount(billPageVO?.month.billPlanDTO.budget as number)}}</text>
-					</view>
+			<image @click="addBill()" src="/static/image/bill/addBill.png" class="add-bill" mode=""></image>
+			<!-- 1. 总资产核心卡片 -->
+			<view class="summary-card">
+				<view class="total-assets-box">
+					<text class="assets-label">总资产 (CNY)</text>
+					<text class="assets-value"
+						v-if="billPageVO">¥{{formatAmount(billPageVO?.totalAsset as number)}}</text>
 				</view>
 
-				<!-- 预算进度条 -->
-				<view class="budget-track">
-					<view class="budget-fill" style="width: 54%;"></view>
+				<view class="divider"></view>
+
+				<!-- 本月概览模块 -->
+				<view class="overview-section">
+					<view class="section-header">
+						<text class="section-title">本月概览</text>
+						<text class="section-subtitle">{{new Date().getMonth() + 1}}月收支</text>
+					</view>
+					<view class="stats-row">
+						<view class="stats-col">
+							<text class="s-label">本月预算</text>
+							<text class="s-value text-blue">¥{{formatAmount(monthBill.expenseBudget as number)}}</text>
+						</view>
+						<view class="stats-col">
+							<text class="s-label">支出</text>
+							<text class="s-value text-red">¥{{formatAmount(monthBill.actualExpense as number)}}</text>
+						</view>
+
+						<view class="stats-col">
+							<text class="s-label">收入目标</text>
+							<text class="s-value text-blue">¥{{formatAmount(monthBill.targetIncome as number)}}</text>
+						</view>
+						<view class="stats-col">
+							<text class="s-label">收入</text>
+							<text class="s-value text-red">¥{{formatAmount(monthBill.actualIncome)}}</text>
+						</view>
+					</view>
+					<view class="progress-container">
+						<view class="progress-label-row">
+							<text class="p-label">支出预算</text>
+							<text class="p-percent">{{monthExpensePercentage.toFixed(2)}}%</text>
+						</view>
+						<progress v-if="monthExpensePercentage" backgroundColor="#f0f3ff" :border-radius="4"
+							:activeColor="Math.round(monthExpensePercentage)>=100?'#67c23a':'#409eff'"
+							:percent="progress[progress[Math.round(monthExpensePercentage)>=100?100:Math.round(monthExpensePercentage)]]"
+							:stroke-width="8" />
+						<view class="progress-label-row" style="margin-top: 5px;">
+
+							<view style="display: flex;flex-direction: row; justify-content: center; align-items: center;">
+								<text class="p-label">收入目标</text>
+								·
+								<text v-if="Math.round(monthIncomePercentage)>=100" class=" fts-12 text-red">
+									已达成目标
+								</text>
+							</view>
+
+							<text class="p-percent">{{monthIncomePercentage.toFixed(2)}}%</text>
+						</view>
+						<progress v-if="monthIncomePercentage" backgroundColor="#f0f3ff" :border-radius="4"
+							:activeColor="Math.round(monthIncomePercentage)>=100?'#67c23a':'#409eff'"
+							:percent="progress[Math.round(monthIncomePercentage)>=100?100:Math.round(monthIncomePercentage)]"
+							:stroke-width="8" />
+					</view>
+
 				</view>
-				<text class="budget-hint">已用 54%</text>
+
+				<!-- 年度概览模块 -->
+				<view class="overview-section no-margin">
+					<view class="section-header">
+						<text class="section-title">年度概览</text>
+						<text class="section-subtitle">{{new Date().getFullYear()}}年度收支</text>
+					</view>
+					<view class="stats-row" v-if="billPageVO">
+						<view class="stats-col">
+							<text class="s-label">本年预算</text>
+							<text
+								class="s-value text-blue">¥{{formatAmount(billPageVO?.year.billPlanDTO.budget as number)}}</text>
+						</view>
+						<view class="stats-col">
+							<text class="s-label">支出</text>
+							<text
+								class="s-value text-red">¥{{formatAmount(billPageVO?.year.billExpIncDTO.expense as number)}}</text>
+						</view>
+						<view class="stats-col">
+							<text class="s-label">收入目标</text>
+							<text
+								class="s-value text-blue">¥{{formatAmount(billPageVO?.year.billPlanDTO.incomeGoal as number)}}</text>
+						</view>
+						<view class="stats-col">
+							<text class="s-label">收入</text>
+							<text
+								class="s-value text-red">¥{{formatAmount(billPageVO?.year.billExpIncDTO.income as number)}}</text>
+						</view>
+					</view>
+					<view class="progress-container">
+						<view class="progress-label-row">
+							<text class="p-label">支出预算</text>
+							<text class="p-percent">{{yearExpensePercentage.toFixed(2)}}%</text>
+						</view>
+						<progress v-if="yearExpensePercentage" backgroundColor="#f0f3ff" :border-radius="4"
+							:activeColor="Math.round(yearExpensePercentage)>=100?'#67c23a':'#409eff'"
+							:percent="progress[progress[Math.round(yearExpensePercentage)>=100?100:Math.round(yearExpensePercentage)]]"
+							:stroke-width="8" />
+						<view class="progress-label-row" style="margin-top: 5px;">
+							<view style="display: flex;flex-direction: row; justify-content: center; align-items: center;">
+								<text class="p-label">收入目标</text>
+								·
+								<text v-if="Math.round(yeaerIncomePercentage)>=100" class=" fts-12 text-red">
+									已达成目标
+								</text>
+							</view>
+							<text class="p-percent">{{yeaerIncomePercentage.toFixed(2)}}%</text>
+						</view>
+						<progress v-if="yeaerIncomePercentage" backgroundColor="#f0f3ff"
+							:activeColor="Math.round(yeaerIncomePercentage)>=100?'#67c23a':'#409eff'" :border-radius="4"
+							:percent="progress[Math.round(yeaerIncomePercentage)>=100?100:Math.round(yeaerIncomePercentage)]"
+							:stroke-width="8" />
+					</view>
+				</view>
 			</view>
 
 			<!-- 2. 日期分组：今天 -->
@@ -121,6 +302,14 @@
 
 
 <style scoped>
+	.add-bill {
+		position: fixed;
+		bottom: 20;
+		right: 20px;
+		width: 60px;
+		height: 60px;
+	}
+
 	.container {
 		background-color: #f9f9ff;
 		height: 100%;
@@ -166,42 +355,85 @@
 	}
 
 	/* 资产概览卡片 */
+	/* 总资产大卡片 */
 	.summary-card {
+		background-color: #ffffff;
+		border-radius: 24px;
 		padding: 24px;
-		margin-top: 10px;
-		box-shadow: 0 4px 16px rgba(0, 102, 255, 0.04);
+		margin: 10px 14px;
+		box-shadow: 0 4px 20px rgba(0, 102, 255, 0.05);
 	}
 
-	.summary-label {
-		font-size: 14px;
+	.total-assets-box {
+		margin-bottom: 20px;
+	}
+
+	.assets-label {
+		font-size: 13px;
 		color: #7b87a0;
-		margin-bottom: 8px;
+		margin-bottom: 6px;
 	}
 
-	.total-amount {
+	.assets-value {
 		font-size: 32px;
-		font-weight: 700;
+		font-weight: 800;
 		color: #1a1a1a;
+	}
+
+	.divider {
+		height: 1px;
+		background-color: #f0f3ff;
 		margin-bottom: 24px;
 	}
 
-	.budget-row {
+	/* 概览章节 */
+	.overview-section {
+		margin-bottom: 32px;
+	}
+
+	.no-margin {
+		margin-bottom: 0;
+	}
+
+	.section-header {
 		flex-direction: row;
-		margin-bottom: 12px;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 16px;
 	}
 
-	.budget-col {
-		flex: 1;
+	.section-title {
+		font-size: 18px;
+		font-weight: 800;
+		color: #0066ff;
 	}
 
-	.b-label {
-		font-size: 13px;
+	.section-subtitle {
+		font-size: 12px;
 		color: #7b87a0;
-		margin-bottom: 4px;
+		font-weight: 600;
+		letter-spacing: 0.5px;
 	}
 
-	.b-value {
-		font-size: 17px;
+	/* 统计三列 */
+	.stats-row {
+		flex-direction: row;
+		justify-content: space-between;
+		margin-bottom: 20px;
+	}
+
+	.stats-col {
+		flex-direction: column;
+	}
+
+	.s-label {
+		font-size: 12px;
+		color: #7b87a0;
+		margin-bottom: 6px;
+	}
+
+	.s-value {
+		font-size: 14px;
 		font-weight: 700;
 		color: #1a1a1a;
 	}
@@ -210,25 +442,38 @@
 		color: #d32f2f;
 	}
 
-	.budget-track {
-		height: 8px;
-		background-color: #f0f3ff;
-		border-radius: 4px;
-		overflow: hidden;
+	.text-blue {
+		color: #0066ff;
+	}
+
+	/* 进度条 */
+	.progress-container {
+		flex-direction: column;
+	}
+
+	.progress-label-row {
+		flex-direction: row;
+		justify-content: space-between;
 		margin-bottom: 8px;
 	}
 
-	.budget-fill {
-		height: 8px;
-		background-color: #0066ff;
-		border-radius: 4px;
+	.p-label {
+		font-size: 12px;
+		color: #1a1a1a;
+		font-weight: 500;
 	}
 
-	.budget-hint {
+	.p-percent {
 		font-size: 12px;
-		color: #7b87a0;
-		text-align: right;
+		color: #1a1a1a;
+		font-weight: 700;
 	}
+
+
+
+
+
+
 
 	/* 日期标题 */
 	.date-header {

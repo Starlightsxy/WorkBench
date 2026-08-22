@@ -1,8 +1,8 @@
 <script setup lang="uts">
-	import { getTaskList } from '../../api';
+	import { getTaskList, saveTask } from '../../api';
 	import { getUserStorage } from '../../storage';
 	import { Task, saveTaskDTO, tasksStatus } from '../../type';
-	import { dateTimeToTimestamp, formatBillDate, formatDateYearMonthDay, formatDateYearMonthDayHourse } from '../../utils';
+	import { dateTimeToTimestamp, formatBillDate, formatDateYearMonthDay, formatDateYearMonthDayHourse, getCurrentMinuteTimestamp } from '../../utils';
 
 
 
@@ -12,28 +12,17 @@
 	// 所有任务
 	const tasks = ref<Task[]>([])
 
-	// 待办任务：进行中 + 已取消
+	// 待办任务：进行中
 	const taskDoIng = computed(() => {
-		return [...tasks.value]
-			.filter(item => item.status != "已完成")
-			.sort((a, b) => {
-				// 进行中的任务永远在前
-				if (a.status == "进行中" && b.status == "已取消") {
-					return -1
-				}
-
-				if (a.status == "已取消" && b.status == "进行中") {
-					return 1
-				}
-
-				// 同一状态按照截止时间升序
-				return a.dueTime - b.dueTime
-			})
+		return [...tasks.value].filter(item => item.status == "进行中")
 	})
-
 	// 已完成任务
 	const completedTasks = computed(() => {
 		return tasks.value.filter(item => item.status == "已完成")
+	})
+	// 已取消的任务
+	const canceledTasks = computed(() => {
+		return tasks.value.filter(item => item.status == "已取消")
 	})
 	// 获取任务待办
 	const getTasks = async () => {
@@ -42,30 +31,18 @@
 		tasks.value = res?.data
 	}
 	// 计算优先级
+	// 计算优先级
 	const proiorityStr = (task : Task) => {
-		const now = new Date()
-		const dueDate = new Date(task.dueTime * 1000)
+		const now = new Date().getTime()
+		const dueTime = task.dueTime * 1000
 
-		// 去掉时分秒，只比较年月日
-		const today = new Date(
-			now.getFullYear(),
-			now.getMonth(),
-			now.getDate()
-		)
+		// 剩余时间，单位：小时
+		const remainingHours =
+			(dueTime - now) / (1000 * 60 * 60)
 
-		const due = new Date(
-			dueDate.getFullYear(),
-			dueDate.getMonth(),
-			dueDate.getDate()
-		)
-
-		const diffDays = Math.floor(
-			(due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-		)
-
-		if (diffDays == 0) {
+		if (remainingHours <= 24) {
 			return "高优先级"
-		} else if (diffDays <= 2) {
+		} else if (remainingHours <= 72) {
 			return "中优先级"
 		} else {
 			return "低优先级"
@@ -96,8 +73,10 @@
 	const tasksData = ref<saveTaskDTO>({
 		id: 0,
 		title: '',
+		status: '',
 		description: '', // 或 1, 2, 3 等
-		dueTime: 0         // 或 null, 或当前时间
+		dueTime: 0,        // 或 null, 或当前时间
+		deleted: 0,
 	});
 	// 截至日期
 	const startDay = ref('')
@@ -126,44 +105,102 @@
 	const onTimeChange = (e : UniPickerChangeEvent) => {
 		startTime.value = e.detail.value as string
 	}
-	// 进入弹层后触发
-	const onAfterLeave = () => {
-		console.log('进来了')
+
+
+	const closeContainer = async (type : 'save' | 'other') => {
+		if (type == 'save') {
+			// 新增或修改操作，也就是保存
+			if (!tasksData.value.title) {
+				uni.showToast({
+					title: '标题不能为空',
+					icon: 'error'
+				})
+				return
+			}
+			if (!tasksData.value.description) {
+				uni.showToast({
+					title: '内容不能为空',
+					icon: 'error'
+				})
+				return
+			}
+
+			if (!startDay.value || !startTime.value) {
+				uni.showToast({
+					title: '截止时间必须填写',
+					icon: 'error'
+				})
+				return
+			}
+			const sTime = getCurrentMinuteTimestamp();
+			const endTime = dateTimeToTimestamp(startDay.value, startTime.value)
+			const eightHours = 8 * 60 * 60
+			const isValid = endTime - sTime > eightHours
+			// 必须大于8小时
+			if (!isValid) {
+				uni.showToast({
+					title: '截止时间大于当前8小时',
+					icon: 'error'
+				})
+				return
+			}
+			tasksData.value.dueTime = dateTimeToTimestamp(startDay.value, startTime.value)
+		}
+
+
+		// 发送请求
+		// 根据id不同发送不同请求
+		const res = await saveTask(tasksData.value)
+		if (res?.code == 1) {
+			uni.showToast({
+				title: res.message,
+				icon: 'success'
+			})
+			containerShow.value = false
+			// 关闭弹层
+			await getTasks()
+		}
+
+
 	}
 
-	const closeContainer = () => {
-		// 判断是否有数据
-		if (!tasksData.value.title) {
-			uni.showToast({
-				title: '标题不能为空',
-				icon: 'error'
-			})
-			return
-		}
-		if (!tasksData.value.description) {
-			uni.showToast({
-				title: '内容不能为空',
-				icon: 'error'
-			})
-			return
-		}
+	const cancelTask = () => {
+		uni.showModal({
+			title: "取消任务",
+			content: "确定要取消这个任务吗？",
+			confirmText: "确定",
+			cancelText: "取消",
+			success: (res) => {
+				if (res.confirm) {
+					// 用户点击了删除
+					tasksData.value.status = "已取消"
+					closeContainer('other')
+				}
+			}
+		})
 
-		if (!startDay.value || !startTime.value) {
-			uni.showToast({
-				title: '截止时间必须填写',
-				icon: 'error'
-			})
-			return
-		}
+	}
+	const comTask = () => {
+		tasksData.value.status = "已完成"
+		closeContainer('other')
 
-		tasksData.value.dueTime = dateTimeToTimestamp(startDay.value,startTime.value)
-		// 发送请求
-		// 判断是否有id发送不同的请求
 
-		// 清空表单
+	}
+	const delTask = () => {
+		uni.showModal({
+			title: "删除任务",
+			content: "确定要删除这个任务吗？",
+			confirmText: "删除",
+			cancelText: "取消",
+			success: (res) => {
+				if (res.confirm) {
+					// 用户点击了删除
+					tasksData.value.deleted = 1
+					closeContainer('other')
+				}
+			}
+		})
 
-		// 关闭弹层
-		containerShow.value = false
 	}
 	// 点击遮罩层触发
 	const clickOver = () => {
@@ -171,20 +208,21 @@
 	}
 
 
-	const currentTab = ref(0); // 0: 进行中, 1: 已完成
+	const currentTab = ref(0); // 0: 进行中, 1: 已完成 2:已取消
 	const flag = ref('')
 	const onAddTask = (type : "add" | "edit", task : Task | null) => {
 		// 触发添加任务弹层逻辑
 		containerShow.value = true
 		if (type == 'add') {
-			console.log('新增任务')
 			flag.value = '新增任务'
 			// 清空表单
 			tasksData.value = {
-				id:0,
-				title:'',
-				description:'',
-				dueTime:0
+				id: 0,
+				title: '',
+				status: '',
+				description: '',
+				dueTime: 0,
+				deleted: 0
 			}
 			startDay.value = ''
 			startTime.value = ''
@@ -194,10 +232,10 @@
 		if (type == 'edit') {
 			flag.value = '修改任务'
 			if (task == null) return
-			// console.log(task?.id)
 			tasksData.value.id = task.id
 			tasksData.value.title = task.title
 			tasksData.value.description = task.description
+			tasksData.value.status = task.status
 			tasksData.value.dueTime = task.dueTime
 
 			// 给日期选择器年月日，赋值年月日
@@ -206,7 +244,7 @@
 			// 给日期选择器时分，赋值时分
 			const now = new Date(tasksData.value.dueTime * 1000)
 
-			const hour =now.getHours().toString().padStart(2, '0')
+			const hour = now.getHours().toString().padStart(2, '0')
 			const minute = now.getMinutes().toString().padStart(2, '0')
 
 			const time = `${hour}:${minute}`
@@ -217,8 +255,8 @@
 		}
 	};
 
-	onShow(() => {
-		getTasks()
+	onShow(async () => {
+		await getTasks()
 	})
 </script>
 <template>
@@ -251,12 +289,16 @@
 					<text class="tab-text" :class="{ 'active-text': currentTab == 1 }">已完成</text>
 					<view v-if="currentTab == 1" class="active-line"></view>
 				</view>
+				<view class="tab-item" :class="{ 'active': currentTab == 2 }" @click="currentTab = 2">
+					<text class="tab-text" :class="{ 'active-text': currentTab == 2 }">已取消</text>
+					<view v-if="currentTab == 2" class="active-line"></view>
+				</view>
 			</view>
 
 			<!-- 2. 添加新任务入口 (虚线边框卡片) -->
 			<view v-if="currentTab == 0" class="add-task-entry" @click="onAddTask('add',null)">
 				<view class="add-icon-box">
-					<text class="add-plus-icon"></text>
+					<image src="/static/image/task/add.png" style="width: 20px;height:20px;" mode=""></image>
 				</view>
 				<text class="add-placeholder-text">添加新任务...</text>
 			</view>
@@ -265,10 +307,13 @@
 			<view class="todo-list-container">
 				<!-- 进行中列表 -->
 				<view v-if="currentTab == 0" class="task-group">
+					<view v-if="taskDoIng.length == 0" style="height: 100%; justify-content: center;align-items: center; padding-top:100px;">
+						<image src="/static/image/task/空空如也 (1).png" mode=""></image>
+					</view>
 					<!-- 任务项: 高优先级 -->
-					<view v-for="item in taskDoIng " :key="item.id">
-						<view class="todo-item" v-if="item.status=='进行中'" @click="onAddTask('edit',item)">
-							<view class="todo-content">
+					<view v-else v-for="item in taskDoIng " :key="item.id">
+						<view class="todo-item" v-if="item.status=='进行中'">
+							<view class="todo-content" @click="onAddTask('edit',item)">
 								<text class="todo-title">{{item.title}}</text>
 								<text class="todo-time">截止日期{{formatDateYearMonthDayHourse(item.dueTime)}}</text>
 							</view>
@@ -281,9 +326,50 @@
 									{{ proiorityStr(item) }}
 								</text>
 							</view>
+							<view class="delTask-item" @click="cancelTask()">
+								<image src="/static/image/task/cancel.png" style="width: 20px;height: 20px;" mode="">
+								</image>
+							</view>
+							<view class="delTask-item" @click="delTask()">
+								<image src="/static/image/task/delete.png" style="width: 20px;height: 20px;" mode="">
+								</image>
+							</view>
 						</view>
-						<view class="todo-item" v-else>
+					</view>
+				</view>
+
+				<!-- 已完成列表 -->
+				<view v-if="currentTab == 1">
+					<view v-if="completedTasks.length == 0" style="height: 100%; justify-content: center;align-items: center; padding-top:186px;">
+						<image src="/static/image/task/空空如也 (1).png" mode=""></image>
+					</view>
+					<view v-else v-for="(item, index) in completedTasks" :key="index">
+						<view class="todo-item completed-item">
 							<view class="todo-content">
+								<text class="todo-title text-gray">{{item.title}}</text>
+								<text class="todo-time">完成时间-{{formatBillDate(item.completedTime as number)}}</text>
+							</view>
+							<view class="check-icon-box">
+								<image style="width: 20px;height: 20px;" src="/static/image/task/completed.png" mode="">
+								</image>
+							</view>
+							<view class="delTask-item" @click="delTask()">
+								<image src="/static/image/task/delete.png" style="width: 20px;height: 20px;" mode="">
+								</image>
+							</view>
+						</view>
+
+					</view>
+
+				</view>
+				<!-- 已取消 -->
+				<view v-if="currentTab == 2" class="task-group">
+					<view v-if="canceledTasks.length == 0" style="height: 100%; justify-content: center;align-items: center; padding-top:186px;">
+						<image src="/static/image/task/空空如也 (1).png" mode=""></image>
+					</view>
+					<view v-else v-for="item in canceledTasks">
+						<view class="todo-item">
+							<view class="todo-content" >
 								<text class="todo-title text-gray">{{item.title}}</text>
 								<text
 									class="todo-time  text-gray">截止日期{{formatDateYearMonthDayHourse(item.dueTime)}}</text>
@@ -294,29 +380,17 @@
 									{{item.status}}
 								</text>
 							</view>
-
-						</view>
-
-					</view>
-				</view>
-
-				<!-- 已完成列表 -->
-				<view v-if="currentTab == 1" class="task-group">
-					<view class="todo-item completed-item" v-for="(item, index) in completedTasks" :key="index">
-						<view class="todo-content">
-							<text class="todo-title text-gray">{{item.title}}</text>
-							<text class="todo-time">完成时间-{{formatBillDate(item.completedTime as number)}}</text>
-						</view>
-						<view class="check-icon-box">
-							<image style="width: 20px;height: 20px;" src="/static/image/task/completed.png" mode="">
-							</image>
+							<view class="delTask-item" @click="delTask()">
+								<image src="/static/image/task/delete.png" style="width: 20px;height: 20px;" mode="">
+								</image>
+							</view>
 						</view>
 					</view>
+
 				</view>
 			</view>
 		</scroll-view>
-		<page-container :show="containerShow" @clickoverlay="clickOver" position="bottom" round overlay
-			@afterenter="onAfterLeave">
+		<page-container :show="containerShow" @clickoverlay="clickOver" position="bottom" round overlay>
 			<view class="modal-content">
 				<!-- 顶部手柄 -->
 				<view class="modal-handle"></view>
@@ -371,7 +445,9 @@
 
 					<!-- 操作按钮 -->
 					<view class="action-area">
-						<button style="margin-top: 20px;" @click="closeContainer" type="primary">{{flag}}任务</button>
+						<button v-if="flag == '修改任务'" style="margin-top: 20px;" @click="comTask()" type="primary">完成任务</button>
+						<button style="margin-top: 20px;" @click="closeContainer('save')"
+							type="primary">{{flag}}</button>
 					</view>
 
 					<!-- 底部安全区域占位 -->
@@ -572,18 +648,13 @@
 	.add-icon-box {
 		width: 24px;
 		height: 24px;
-		background-color: #0066ff;
 		border-radius: 12px;
 		align-items: center;
 		justify-content: center;
 		margin-right: 12px;
 	}
 
-	.add-plus-icon {
-		color: #ffffff;
-		font-size: 14px;
-		font-weight: bold;
-	}
+
 
 	.add-placeholder-text {
 		font-size: 15px;
@@ -596,6 +667,7 @@
 	}
 
 	.todo-item {
+		box-sizing: border-box;
 		flex-direction: row;
 		justify-content: space-between;
 		align-items: center;
@@ -674,6 +746,13 @@
 		color: #7b87a0;
 		font-size: 11px;
 		font-weight: bold;
+	}
+
+	.delTask-item {
+		height: 40px;
+		padding: 0 5px;
+		margin: 0 3px;
+		justify-content: center;
 	}
 
 	/* 已完成样式 */

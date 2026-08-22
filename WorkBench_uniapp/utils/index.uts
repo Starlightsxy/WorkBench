@@ -138,3 +138,14 @@ export const dateTimeToTimestamp = (
 
 	return Math.floor(new Date(dateTimeStr).getTime() / 1000)
 }
+/**
+ * 获取当前时间时间戳
+ */
+export const getCurrentMinuteTimestamp = () => {
+    const now = new Date()
+
+    now.setSeconds(0)
+    now.setMilliseconds(0)
+
+    return Math.floor(now.getTime() / 1000)
+}

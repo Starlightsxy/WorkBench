@@ -39,6 +39,12 @@ export type BillPageVO = {
 }
 
 export type BillGroup = {
-	date: string;
-	bills: Bill[];
+	date : string;
+	bills : Bill[];
+}
+export type YearMonthBillVO = {
+	targetIncome : number;// 收入目标
+	actualIncome : number;// 实际收入
+	expenseBudget : number;// 支出预算
+	actualExpense : number;// 实际支出
 }
